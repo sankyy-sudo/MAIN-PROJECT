@@ -13,6 +13,7 @@ import { Order, OrderStatus, PaymentStatus } from "../models/Order";
 import { OrderEvent } from "../models/OrderEvent";
 import { OrderItem } from "../models/OrderItem";
 import { Refund, RefundStatus } from "../models/Refund";
+import { emailTemplates, sendTemplateEmail } from "../../../utils/email";
 
 interface CreateOrderItem {
   productId: string;
@@ -56,7 +57,7 @@ export class OrderService {
     if (!input.items?.length) throw new Error("Order requires at least one item");
     if (!input.shippingAddress?.trim()) throw new Error("Shipping address is required");
 
-    return sequelize.transaction(async (transaction) => {
+    const createdOrder = await sequelize.transaction(async (transaction) => {
       const lineItems: Array<{
         product: Product;
         quantity: number;
@@ -166,6 +167,26 @@ export class OrderService {
 
       return this.getOrderById(order.id, transaction);
     });
+
+    if (createdOrder) {
+      const value = createdOrder.toJSON() as any;
+      const recipient =
+        value.customer?.email ||
+        value.businessAccount?.email;
+      if (recipient) {
+        await sendTemplateEmail(
+          recipient,
+          emailTemplates.orderConfirmation(
+            value,
+            value.items || [],
+            value.customer?.contactPerson ||
+              value.businessAccount?.contactPerson ||
+              "Customer"
+          )
+        );
+      }
+    }
+    return createdOrder;
   }
 
   async getOrders(query: OrderQuery) {
@@ -206,7 +227,7 @@ export class OrderService {
       throw new Error("Invalid order status");
     }
 
-    return sequelize.transaction(async (transaction) => {
+    const updatedOrder = await sequelize.transaction(async (transaction) => {
       const order = await Order.findByPk(id, {
         transaction,
         lock: transaction.LOCK.UPDATE
@@ -256,6 +277,23 @@ export class OrderService {
       );
       return order;
     });
+
+    if (status === OrderStatus.SHIPPED) {
+      const order = await this.getOrderById(id);
+      if (order) {
+        const value = order.toJSON() as any;
+        const recipient =
+          value.customer?.email ||
+          value.businessAccount?.email;
+        if (recipient) {
+          await sendTemplateEmail(
+            recipient,
+            emailTemplates.orderShipped(value, location)
+          );
+        }
+      }
+    }
+    return updatedOrder;
   }
 
   async getTracking(id: string) {

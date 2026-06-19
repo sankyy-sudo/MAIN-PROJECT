@@ -7,6 +7,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken
 } from "../utils/jwt";
+import { emailTemplates, sendTemplateEmail } from "../utils/email";
 
 export class AuthService {
   async register(name: string, email: string, password: string, role?: string) {
@@ -82,6 +83,14 @@ export class AuthService {
       .digest("hex");
     user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
+
+    const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    await sendTemplateEmail(
+      user.email,
+      emailTemplates.passwordReset(
+        `${frontendUrl}/reset-password/${resetToken}`
+      )
+    );
 
     return resetToken;
   }

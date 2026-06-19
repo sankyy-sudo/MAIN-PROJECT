@@ -14,6 +14,7 @@ import { OrderItem } from "../modules/orders/models/OrderItem";
 import { OrderEvent } from "../modules/orders/models/OrderEvent";
 import { Invoice } from "../modules/orders/models/Invoice";
 import { Refund } from "../modules/orders/models/Refund";
+import { Payment } from "../modules/payments/models/Payment";
 
 Product.belongsTo(Category, { as: "categoryDetails", foreignKey: "category" });
 Category.hasMany(Product, { foreignKey: "category" });
@@ -102,3 +103,10 @@ Order.hasMany(Refund, {
 });
 Refund.belongsTo(Order, { foreignKey: "orderId", onDelete: "CASCADE" });
 Refund.belongsTo(User, { as: "creator", foreignKey: "createdBy" });
+
+Order.hasMany(Payment, {
+  as: "payments",
+  foreignKey: "orderId",
+  onDelete: "CASCADE"
+});
+Payment.belongsTo(Order, { as: "order", foreignKey: "orderId" });

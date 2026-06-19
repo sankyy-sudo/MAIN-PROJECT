@@ -24,3 +24,12 @@ MongoDB wording is superseded by the completed PostgreSQL migration.
 - Structured production logger
 - API documentation
 - `.env.example` files and secret-management guidance
+
+## Commerce expansion roadmap
+
+- Phase A1 Stripe payments: implemented (intent creation, webhook processing,
+  payment/refund state synchronization, React Payment Element).
+- Phase A2 SendGrid email: implemented (password reset, order confirmation,
+  shipping notification, low-stock templates).
+- External credentials are intentionally empty in `.env.example`; live delivery
+  requires Stripe and SendGrid keys.

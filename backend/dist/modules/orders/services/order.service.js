@@ -13,6 +13,7 @@ const Order_1 = require("../models/Order");
 const OrderEvent_1 = require("../models/OrderEvent");
 const OrderItem_1 = require("../models/OrderItem");
 const Refund_1 = require("../models/Refund");
+const email_1 = require("../../../utils/email");
 const orderIncludes = [
     { model: OrderItem_1.OrderItem, as: "items" },
     { model: Customer_1.Customer, as: "customer" },
@@ -28,7 +29,7 @@ class OrderService {
             throw new Error("Order requires at least one item");
         if (!input.shippingAddress?.trim())
             throw new Error("Shipping address is required");
-        return database_1.sequelize.transaction(async (transaction) => {
+        const createdOrder = await database_1.sequelize.transaction(async (transaction) => {
             const lineItems = [];
             for (const item of input.items) {
                 if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
@@ -106,6 +107,17 @@ class OrderService {
             }, { transaction });
             return this.getOrderById(order.id, transaction);
         });
+        if (createdOrder) {
+            const value = createdOrder.toJSON();
+            const recipient = value.customer?.email ||
+                value.businessAccount?.email;
+            if (recipient) {
+                await (0, email_1.sendTemplateEmail)(recipient, email_1.emailTemplates.orderConfirmation(value, value.items || [], value.customer?.contactPerson ||
+                    value.businessAccount?.contactPerson ||
+                    "Customer"));
+            }
+        }
+        return createdOrder;
     }
     async getOrders(query) {
         const where = {};
@@ -136,7 +148,7 @@ class OrderService {
         if (!Object.values(Order_1.OrderStatus).includes(status)) {
             throw new Error("Invalid order status");
         }
-        return database_1.sequelize.transaction(async (transaction) => {
+        const updatedOrder = await database_1.sequelize.transaction(async (transaction) => {
             const order = await Order_1.Order.findByPk(id, {
                 transaction,
                 lock: transaction.LOCK.UPDATE
@@ -180,6 +192,18 @@ class OrderService {
             }, { transaction });
             return order;
         });
+        if (status === Order_1.OrderStatus.SHIPPED) {
+            const order = await this.getOrderById(id);
+            if (order) {
+                const value = order.toJSON();
+                const recipient = value.customer?.email ||
+                    value.businessAccount?.email;
+                if (recipient) {
+                    await (0, email_1.sendTemplateEmail)(recipient, email_1.emailTemplates.orderShipped(value, location));
+                }
+            }
+        }
+        return updatedOrder;
     }
     async getTracking(id) {
         if (!(await Order_1.Order.findByPk(id)))

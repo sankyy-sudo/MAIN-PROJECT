@@ -1,12 +1,13 @@
 import { Op, WhereOptions } from "sequelize";
 import { sequelize } from "../../../config/database";
-import { User } from "../../../models/User";
+import { User, UserRole, UserStatus } from "../../../models/User";
 import { Product } from "../models/Product";
 import {
   InventoryMovement,
   InventoryMovementType
 } from "../models/InventoryMovement";
 import { InventorySetting } from "../models/InventorySetting";
+import { emailTemplates, sendTemplateEmail } from "../../../utils/email";
 
 interface MovementInput {
   productId: string;
@@ -51,7 +52,7 @@ export class InventoryService {
       throw new Error("A reason is required for every stock movement");
     }
 
-    return sequelize.transaction(async (transaction) => {
+    const result = await sequelize.transaction(async (transaction) => {
       const product = await Product.findByPk(input.productId, {
         transaction,
         lock: transaction.LOCK.UPDATE
@@ -92,6 +93,34 @@ export class InventoryService {
 
       return movement;
     });
+
+    const setting = await InventorySetting.findOne({
+      where: { productId: input.productId }
+    });
+    if (
+      setting &&
+      result.newQuantity <= setting.lowStockThreshold
+    ) {
+      const product = await Product.findByPk(input.productId);
+      const managers = await User.findAll({
+        where: {
+          role: UserRole.INVENTORY_MANAGER,
+          status: UserStatus.ACTIVE
+        },
+        attributes: ["email"]
+      });
+      if (product && managers.length) {
+        await sendTemplateEmail(
+          managers.map((manager) => manager.email),
+          emailTemplates.lowStockAlert(
+            product,
+            result.newQuantity,
+            setting.lowStockThreshold
+          )
+        );
+      }
+    }
+    return result;
   }
 
   async getMovements(query: MovementQuery) {

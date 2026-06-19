@@ -7,6 +7,7 @@ const User_1 = require("../../../models/User");
 const Product_1 = require("../models/Product");
 const InventoryMovement_1 = require("../models/InventoryMovement");
 const InventorySetting_1 = require("../models/InventorySetting");
+const email_1 = require("../../../utils/email");
 const movementIncludes = [
     {
         model: Product_1.Product,
@@ -30,7 +31,7 @@ class InventoryService {
         if (!input.reason?.trim()) {
             throw new Error("A reason is required for every stock movement");
         }
-        return database_1.sequelize.transaction(async (transaction) => {
+        const result = await database_1.sequelize.transaction(async (transaction) => {
             const product = await Product_1.Product.findByPk(input.productId, {
                 transaction,
                 lock: transaction.LOCK.UPDATE
@@ -60,6 +61,24 @@ class InventoryService {
             });
             return movement;
         });
+        const setting = await InventorySetting_1.InventorySetting.findOne({
+            where: { productId: input.productId }
+        });
+        if (setting &&
+            result.newQuantity <= setting.lowStockThreshold) {
+            const product = await Product_1.Product.findByPk(input.productId);
+            const managers = await User_1.User.findAll({
+                where: {
+                    role: User_1.UserRole.INVENTORY_MANAGER,
+                    status: User_1.UserStatus.ACTIVE
+                },
+                attributes: ["email"]
+            });
+            if (product && managers.length) {
+                await (0, email_1.sendTemplateEmail)(managers.map((manager) => manager.email), email_1.emailTemplates.lowStockAlert(product, result.newQuantity, setting.lowStockThreshold));
+            }
+        }
+        return result;
     }
     async getMovements(query) {
         const where = {};

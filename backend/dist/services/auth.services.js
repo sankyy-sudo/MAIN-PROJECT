@@ -9,6 +9,7 @@ const crypto_1 = __importDefault(require("crypto"));
 const sequelize_1 = require("sequelize");
 const User_1 = require("../models/User");
 const jwt_1 = require("../utils/jwt");
+const email_1 = require("../utils/email");
 class AuthService {
     async register(name, email, password, role) {
         const existingUser = await User_1.User.findOne({ where: { email: email.toLowerCase() } });
@@ -69,6 +70,8 @@ class AuthService {
             .digest("hex");
         user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
         await user.save();
+        const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+        await (0, email_1.sendTemplateEmail)(user.email, email_1.emailTemplates.passwordReset(`${frontendUrl}/reset-password/${resetToken}`));
         return resetToken;
     }
     async resetPassword(token, password) {
