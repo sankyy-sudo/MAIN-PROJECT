@@ -18,6 +18,8 @@ import { errorHandler } from "./middleware/error.middleware";
 import orderRoutes from "./modules/orders/routes/order.routes";
 import paymentRoutes from "./modules/payments/routes/payment.routes";
 import { paymentController } from "./modules/payments/controllers/payment.controller";
+import publicCatalogRoutes from "./modules/inventory/routes/public-catalog.routes";
+import cartRoutes from "./modules/cart/routes/cart.routes";
 import {
   authLimiter,
   globalLimiter,
@@ -53,6 +55,7 @@ app.use(cookieParser());
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/customer/login", authLimiter);
 app.use("/api/public", publicApiLimiter);
+app.use("/api/public", publicCatalogRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -66,6 +69,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/cart", cartRoutes);
 
 app.get("/", (_req, res) => {
   res.status(200).json({

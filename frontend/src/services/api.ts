@@ -10,11 +10,19 @@ api.interceptors.request.use(
   config => {
     const token =
       localStorage.getItem("token");
+    let cartSessionId =
+      localStorage.getItem("cartSessionId");
+
+    if (!cartSessionId) {
+      cartSessionId = crypto.randomUUID();
+      localStorage.setItem("cartSessionId", cartSessionId);
+    }
 
     if (token) {
       config.headers.Authorization =
         `Bearer ${token}`;
     }
+    config.headers["x-cart-session-id"] = cartSessionId;
 
     return config;
   }

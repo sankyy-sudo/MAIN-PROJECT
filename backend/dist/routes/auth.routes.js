@@ -7,6 +7,8 @@ const auth_validations_1 = require("../validations/auth.validations");
 const auth_middleware_1 = require("../middleware/auth.middleware");
 const router = (0, express_1.Router)();
 router.post("/register", (0, validate_middleware_1.validate)(auth_validations_1.registerSchema), auth_controller_1.authController.register.bind(auth_controller_1.authController));
+router.post("/customer/register", (0, validate_middleware_1.validate)(auth_validations_1.registerSchema), auth_controller_1.authController.customerRegister.bind(auth_controller_1.authController));
+router.post("/customer/login", (0, validate_middleware_1.validate)(auth_validations_1.loginSchema), auth_controller_1.authController.customerLogin.bind(auth_controller_1.authController));
 router.post("/login", (0, validate_middleware_1.validate)(auth_validations_1.loginSchema), auth_controller_1.authController.login.bind(auth_controller_1.authController));
 router.get("/profile", auth_middleware_1.authenticate, auth_controller_1.authController.profile.bind(auth_controller_1.authController));
 router.post("/logout", auth_middleware_1.authenticate, auth_controller_1.authController.logout.bind(auth_controller_1.authController));

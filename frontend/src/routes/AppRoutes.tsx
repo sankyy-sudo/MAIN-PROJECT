@@ -31,9 +31,23 @@ from "../pages/orders/Orders";
 
 import DashboardLayout
 from "../layouts/DashboardLayout";
+import StoreLayout
+from "../layouts/StoreLayout";
 
 import ProtectedRoute
 from "./ProtectedRoute";
+import CustomerProtectedRoute
+from "./CustomerProtectedRoute";
+import CustomerRegister
+from "../pages/auth/CustomerRegister";
+import ForgotPassword
+from "../pages/auth/ForgotPassword";
+import ResetPassword
+from "../pages/auth/ResetPassword";
+import ProductsPage
+from "../pages/store/ProductsPage";
+import CartPage
+from "../pages/store/CartPage";
 
 const AppRoutes = () => {
   return (
@@ -53,6 +67,53 @@ const AppRoutes = () => {
         <Route
           path="/login"
           element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<CustomerRegister />}
+        />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/reset-password/:token"
+          element={<ResetPassword />}
+        />
+
+        <Route element={<StoreLayout />}>
+          <Route
+            path="/store"
+            element={<Navigate to="/store/products" replace />}
+          />
+          <Route
+            path="/store/products"
+            element={<ProductsPage />}
+          />
+          <Route
+            path="/cart"
+            element={<CartPage />}
+          />
+          <Route
+            path="/store/about"
+            element={<ProductsPage />}
+          />
+          <Route
+            path="/store/contact"
+            element={<ProductsPage />}
+          />
+        </Route>
+
+        <Route
+          path="/checkout"
+          element={
+            <CustomerProtectedRoute>
+              <StoreLayout />
+            </CustomerProtectedRoute>
+          }
         />
 
         <Route

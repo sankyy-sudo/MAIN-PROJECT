@@ -22,6 +22,17 @@ export const sequelize = databaseUrl
 export const connectDB = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
+    await sequelize.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM pg_type WHERE typname = 'enum_users_role'
+        ) THEN
+          ALTER TYPE "enum_users_role" ADD VALUE IF NOT EXISTS 'CUSTOMER';
+        END IF;
+      END
+      $$;
+    `);
     require("./associations");
     await sequelize.sync({
       alter:

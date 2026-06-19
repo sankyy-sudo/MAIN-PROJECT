@@ -34,3 +34,26 @@ export const authenticate = (
     });
   }
 };
+
+export const optionalAuthenticate = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return next();
+  }
+
+  try {
+    const decoded = verifyAccessToken(authHeader.split(" ")[1]);
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role as any
+    };
+  } catch {
+    // Public endpoints remain accessible when an optional token is invalid.
+  }
+  return next();
+};

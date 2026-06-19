@@ -17,6 +17,8 @@ const OrderEvent_1 = require("../modules/orders/models/OrderEvent");
 const Invoice_1 = require("../modules/orders/models/Invoice");
 const Refund_1 = require("../modules/orders/models/Refund");
 const Payment_1 = require("../modules/payments/models/Payment");
+const Cart_1 = require("../modules/cart/models/Cart");
+const CartItem_1 = require("../modules/cart/models/CartItem");
 Product_1.Product.belongsTo(Category_1.Category, { as: "categoryDetails", foreignKey: "category" });
 Category_1.Category.hasMany(Product_1.Product, { foreignKey: "category" });
 Product_1.Product.belongsTo(Brand_1.Brand, { as: "brandDetails", foreignKey: "brand" });
@@ -93,9 +95,16 @@ Order_1.Order.hasMany(Refund_1.Refund, {
 });
 Refund_1.Refund.belongsTo(Order_1.Order, { foreignKey: "orderId", onDelete: "CASCADE" });
 Refund_1.Refund.belongsTo(User_1.User, { as: "creator", foreignKey: "createdBy" });
-Order_1.Order.hasMany(Payment_1.Payment, {
-    as: "payments",
+Order_1.Order.hasOne(Payment_1.Payment, {
+    as: "payment",
     foreignKey: "orderId",
-    onDelete: "CASCADE"
+    onDelete: "RESTRICT"
 });
 Payment_1.Payment.belongsTo(Order_1.Order, { as: "order", foreignKey: "orderId" });
+Cart_1.Cart.hasMany(CartItem_1.CartItem, {
+    as: "items",
+    foreignKey: "cartId",
+    onDelete: "CASCADE"
+});
+CartItem_1.CartItem.belongsTo(Cart_1.Cart, { foreignKey: "cartId" });
+CartItem_1.CartItem.belongsTo(Product_1.Product, { as: "product", foreignKey: "productId" });

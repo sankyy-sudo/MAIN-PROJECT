@@ -28,6 +28,18 @@ router.post(
 );
 
 router.post(
+  "/customer/register",
+  validate(registerSchema),
+  authController.customerRegister.bind(authController)
+);
+
+router.post(
+  "/customer/login",
+  validate(loginSchema),
+  authController.customerLogin.bind(authController)
+);
+
+router.post(
   "/login",
   validate(loginSchema),
   authController.login.bind(authController)

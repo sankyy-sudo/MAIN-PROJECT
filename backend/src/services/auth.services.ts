@@ -10,6 +10,37 @@ import {
 import { emailTemplates, sendTemplateEmail } from "../utils/email";
 
 export class AuthService {
+  async registerCustomer(name: string, email: string, password: string) {
+    const existing = await User.findOne({
+      where: { email: email.toLowerCase() }
+    });
+    if (existing) throw new Error("Email already registered");
+
+    const user = await User.create({
+      name,
+      email,
+      password: await bcrypt.hash(password, 10),
+      role: UserRole.CUSTOMER
+    });
+    await sendTemplateEmail(
+      user.email,
+      emailTemplates.welcomeEmail(user)
+    );
+    return {
+      user,
+      accessToken: generateAccessToken(user),
+      refreshToken: generateRefreshToken(user)
+    };
+  }
+
+  async loginCustomer(email: string, password: string) {
+    const result = await this.login(email, password);
+    if (result.user.role !== UserRole.CUSTOMER) {
+      throw new Error("Customer account required");
+    }
+    return result;
+  }
+
   async register(name: string, email: string, password: string, role?: string) {
     const existingUser = await User.findOne({ where: { email: email.toLowerCase() } });
 

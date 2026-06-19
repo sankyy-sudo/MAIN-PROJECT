@@ -22,6 +22,8 @@ const error_middleware_1 = require("./middleware/error.middleware");
 const order_routes_1 = __importDefault(require("./modules/orders/routes/order.routes"));
 const payment_routes_1 = __importDefault(require("./modules/payments/routes/payment.routes"));
 const payment_controller_1 = require("./modules/payments/controllers/payment.controller");
+const public_catalog_routes_1 = __importDefault(require("./modules/inventory/routes/public-catalog.routes"));
+const cart_routes_1 = __importDefault(require("./modules/cart/routes/cart.routes"));
 const rateLimit_middleware_1 = require("./middleware/rateLimit.middleware");
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
@@ -38,6 +40,7 @@ app.use((0, cookie_parser_1.default)());
 app.use("/api/auth/login", rateLimit_middleware_1.authLimiter);
 app.use("/api/auth/customer/login", rateLimit_middleware_1.authLimiter);
 app.use("/api/public", rateLimit_middleware_1.publicApiLimiter);
+app.use("/api/public", public_catalog_routes_1.default);
 app.use("/api/auth", auth_routes_1.default);
 app.use("/api/users", user_routes_1.default);
 app.use("/api/dashboard", dashboard_routes_1.default);
@@ -50,6 +53,7 @@ app.use("/api/products", product_routes_1.default);
 app.use("/api/inventory", inventory_routes_1.default);
 app.use("/api/orders", order_routes_1.default);
 app.use("/api/payments", payment_routes_1.default);
+app.use("/api/cart", cart_routes_1.default);
 app.get("/", (_req, res) => {
     res.status(200).json({
         success: true,

@@ -17,6 +17,17 @@ exports.sequelize = databaseUrl
 const connectDB = async () => {
     try {
         await exports.sequelize.authenticate();
+        await exports.sequelize.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM pg_type WHERE typname = 'enum_users_role'
+        ) THEN
+          ALTER TYPE "enum_users_role" ADD VALUE IF NOT EXISTS 'CUSTOMER';
+        END IF;
+      END
+      $$;
+    `);
         require("./associations");
         await exports.sequelize.sync({
             alter: process.env.NODE_ENV === "development" &&

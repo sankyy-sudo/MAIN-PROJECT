@@ -12,55 +12,51 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../store";
 import api from "../../services/api";
 import { loginSuccess } from "../../store/slices/authSlice";
-import { fetchCart, mergeCart } from "../../store/slices/cartSlice";
+import { fetchCart } from "../../store/slices/cartSlice";
 
-interface LoginForm {
+interface RegisterForm {
+  name: string;
   email: string;
   password: string;
+  confirmPassword: string;
 }
 
-const adminRoles = [
-  "SUPER_ADMIN",
-  "ADMIN",
-  "SALES_MANAGER",
-  "INVENTORY_MANAGER",
-  "SUPPORT"
-];
-
-const Login = () => {
+const CustomerRegister = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors }
-  } = useForm<LoginForm>();
+  } = useForm<RegisterForm>();
 
-  const submit = async (values: LoginForm) => {
+  const submit = async (values: RegisterForm) => {
     setError("");
     setLoading(true);
     try {
-      const response = await api.post("/auth/login", values);
-      const user = response.data.data.user;
-      const token = response.data.data.accessToken;
-      dispatch(loginSuccess({ user, token }));
-      await dispatch(mergeCart());
-      await dispatch(fetchCart());
-      const redirect = searchParams.get("redirect");
-      navigate(
-        redirect ||
-          (adminRoles.includes(user.role) ? "/dashboard" : "/store/products")
+      const response = await api.post("/auth/customer/register", {
+        name: values.name,
+        email: values.email,
+        password: values.password
+      });
+      dispatch(
+        loginSuccess({
+          user: response.data.data.user,
+          token: response.data.data.accessToken
+        })
       );
+      await dispatch(fetchCart());
+      navigate("/store/products");
     } catch (requestError: any) {
-      setError(requestError.response?.data?.message || "Login failed");
+      setError(requestError.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -73,26 +69,26 @@ const Login = () => {
           <Stack spacing={2} component="form" onSubmit={handleSubmit(submit)}>
             <Typography
               variant="h4"
-              align="center"
               color="primary"
+              align="center"
               sx={{ fontWeight: 700 }}
             >
               COTECAE
             </Typography>
             <Typography variant="h5" align="center">
-              Sign in to your account
+              Create your account
             </Typography>
             {error && <Alert severity="error">{error}</Alert>}
             <TextField
+              label="Name"
+              {...register("name", { required: "Name is required", minLength: 2 })}
+              error={Boolean(errors.name)}
+              helperText={errors.name?.message}
+            />
+            <TextField
               label="Email"
               type="email"
-              {...register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^\S+@\S+$/i,
-                  message: "Enter a valid email"
-                }
-              })}
+              {...register("email", { required: "Email is required" })}
               error={Boolean(errors.email)}
               helperText={errors.email?.message}
             />
@@ -106,17 +102,22 @@ const Login = () => {
               error={Boolean(errors.password)}
               helperText={errors.password?.message}
             />
+            <TextField
+              label="Confirm Password"
+              type="password"
+              {...register("confirmPassword", {
+                validate: (value) =>
+                  value === watch("password") || "Passwords do not match"
+              })}
+              error={Boolean(errors.confirmPassword)}
+              helperText={errors.confirmPassword?.message}
+            />
             <Button type="submit" variant="contained" disabled={loading}>
-              {loading ? <CircularProgress size={22} /> : "Login"}
+              {loading ? <CircularProgress size={22} /> : "Create Account"}
             </Button>
-            <Stack direction="row" sx={{ justifyContent: "space-between" }}>
-              <MuiLink component={Link} to="/forgot-password">
-                Forgot password?
-              </MuiLink>
-              <MuiLink component={Link} to="/register">
-                Create account
-              </MuiLink>
-            </Stack>
+            <MuiLink component={Link} to="/login" align="center">
+              Already have an account? Sign in
+            </MuiLink>
           </Stack>
         </Paper>
       </Box>
@@ -124,4 +125,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default CustomerRegister;

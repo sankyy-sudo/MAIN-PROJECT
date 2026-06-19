@@ -10,6 +10,7 @@ var UserRole;
     UserRole["SALES_MANAGER"] = "SALES_MANAGER";
     UserRole["INVENTORY_MANAGER"] = "INVENTORY_MANAGER";
     UserRole["SUPPORT"] = "SUPPORT";
+    UserRole["CUSTOMER"] = "CUSTOMER";
 })(UserRole || (exports.UserRole = UserRole = {}));
 var UserStatus;
 (function (UserStatus) {
@@ -65,6 +66,7 @@ User.init({
     lastLogin: sequelize_1.DataTypes.DATE,
     passwordResetToken: sequelize_1.DataTypes.STRING,
     passwordResetExpires: sequelize_1.DataTypes.DATE,
+    businessAccountId: sequelize_1.DataTypes.UUID,
     createdAt: sequelize_1.DataTypes.DATE,
     updatedAt: sequelize_1.DataTypes.DATE
 }, {

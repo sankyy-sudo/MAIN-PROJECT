@@ -11,6 +11,32 @@ const User_1 = require("../models/User");
 const jwt_1 = require("../utils/jwt");
 const email_1 = require("../utils/email");
 class AuthService {
+    async registerCustomer(name, email, password) {
+        const existing = await User_1.User.findOne({
+            where: { email: email.toLowerCase() }
+        });
+        if (existing)
+            throw new Error("Email already registered");
+        const user = await User_1.User.create({
+            name,
+            email,
+            password: await bcryptjs_1.default.hash(password, 10),
+            role: User_1.UserRole.CUSTOMER
+        });
+        await (0, email_1.sendTemplateEmail)(user.email, email_1.emailTemplates.welcomeEmail(user));
+        return {
+            user,
+            accessToken: (0, jwt_1.generateAccessToken)(user),
+            refreshToken: (0, jwt_1.generateRefreshToken)(user)
+        };
+    }
+    async loginCustomer(email, password) {
+        const result = await this.login(email, password);
+        if (result.user.role !== User_1.UserRole.CUSTOMER) {
+            throw new Error("Customer account required");
+        }
+        return result;
+    }
     async register(name, email, password, role) {
         const existingUser = await User_1.User.findOne({ where: { email: email.toLowerCase() } });
         if (existingUser) {

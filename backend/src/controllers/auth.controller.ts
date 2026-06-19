@@ -7,6 +7,54 @@ const getParamValue = (value: string | string[]) =>
   Array.isArray(value) ? value[0] : value;
 
 export class AuthController {
+  async customerRegister(req: Request, res: Response) {
+    try {
+      const result = await authService.registerCustomer(
+        req.body.name,
+        req.body.email,
+        req.body.password
+      );
+      res.cookie("refreshToken", result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+      return res.status(201).json({
+        success: true,
+        message: "Account created",
+        data: {
+          user: result.user,
+          accessToken: result.accessToken
+        }
+      });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async customerLogin(req: Request, res: Response) {
+    try {
+      const result = await authService.loginCustomer(
+        req.body.email,
+        req.body.password
+      );
+      res.cookie("refreshToken", result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+      return res.json({
+        success: true,
+        message: "Login successful",
+        data: { user: result.user, accessToken: result.accessToken }
+      });
+    } catch (error: any) {
+      return res.status(401).json({ success: false, message: error.message });
+    }
+  }
+
   async register(req: Request, res: Response) {
     try {
       const { name, email, password, role } = req.body;

@@ -6,7 +6,8 @@ export enum UserRole {
   ADMIN = "ADMIN",
   SALES_MANAGER = "SALES_MANAGER",
   INVENTORY_MANAGER = "INVENTORY_MANAGER",
-  SUPPORT = "SUPPORT"
+  SUPPORT = "SUPPORT",
+  CUSTOMER = "CUSTOMER"
 }
 
 export enum UserStatus {
@@ -27,6 +28,7 @@ export interface IUser {
   lastLogin?: Date | null;
   passwordResetToken?: string | null;
   passwordResetExpires?: Date | null;
+  businessAccountId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +43,7 @@ type UserCreationAttributes = Optional<
   | "lastLogin"
   | "passwordResetToken"
   | "passwordResetExpires"
+  | "businessAccountId"
   | "createdAt"
   | "updatedAt"
 >;
@@ -60,6 +63,7 @@ export class User
   declare lastLogin: Date | null;
   declare passwordResetToken: string | null;
   declare passwordResetExpires: Date | null;
+  declare businessAccountId: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 
@@ -111,6 +115,7 @@ User.init(
     lastLogin: DataTypes.DATE,
     passwordResetToken: DataTypes.STRING,
     passwordResetExpires: DataTypes.DATE,
+    businessAccountId: DataTypes.UUID,
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE
   },

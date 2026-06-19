@@ -5,6 +5,47 @@ const auth_services_1 = require("../services/auth.services");
 const authService = new auth_services_1.AuthService();
 const getParamValue = (value) => Array.isArray(value) ? value[0] : value;
 class AuthController {
+    async customerRegister(req, res) {
+        try {
+            const result = await authService.registerCustomer(req.body.name, req.body.email, req.body.password);
+            res.cookie("refreshToken", result.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+            return res.status(201).json({
+                success: true,
+                message: "Account created",
+                data: {
+                    user: result.user,
+                    accessToken: result.accessToken
+                }
+            });
+        }
+        catch (error) {
+            return res.status(400).json({ success: false, message: error.message });
+        }
+    }
+    async customerLogin(req, res) {
+        try {
+            const result = await authService.loginCustomer(req.body.email, req.body.password);
+            res.cookie("refreshToken", result.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+            return res.json({
+                success: true,
+                message: "Login successful",
+                data: { user: result.user, accessToken: result.accessToken }
+            });
+        }
+        catch (error) {
+            return res.status(401).json({ success: false, message: error.message });
+        }
+    }
     async register(req, res) {
         try {
             const { name, email, password, role } = req.body;
