@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../../../middleware/auth.middleware");
+const role_middleware_1 = require("../../../middleware/role.middleware");
+const order_controller_1 = require("../controllers/order.controller");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate);
+router.get("/", order_controller_1.orderController.list.bind(order_controller_1.orderController));
+router.post("/", (0, role_middleware_1.authorize)("SUPER_ADMIN", "ADMIN", "SALES_MANAGER"), order_controller_1.orderController.create.bind(order_controller_1.orderController));
+router.get("/:id/tracking", order_controller_1.orderController.tracking.bind(order_controller_1.orderController));
+router.get("/:id/invoice", order_controller_1.orderController.invoice.bind(order_controller_1.orderController));
+router.post("/:id/refunds", (0, role_middleware_1.authorize)("SUPER_ADMIN", "ADMIN", "SALES_MANAGER"), order_controller_1.orderController.refund.bind(order_controller_1.orderController));
+router.patch("/refunds/:refundId/status", (0, role_middleware_1.authorize)("SUPER_ADMIN", "ADMIN"), order_controller_1.orderController.refundStatus.bind(order_controller_1.orderController));
+router.patch("/:id/status", (0, role_middleware_1.authorize)("SUPER_ADMIN", "ADMIN", "SALES_MANAGER", "INVENTORY_MANAGER"), order_controller_1.orderController.status.bind(order_controller_1.orderController));
+router.get("/:id", order_controller_1.orderController.get.bind(order_controller_1.orderController));
+exports.default = router;

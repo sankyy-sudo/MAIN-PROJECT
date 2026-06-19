@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../../../middleware/auth.middleware");
+const customer_controller_1 = require("../controllers/customer.controller");
+const router = (0, express_1.Router)();
+router.post("/", auth_middleware_1.authenticate, customer_controller_1.customerController.createCustomer.bind(customer_controller_1.customerController));
+router.get("/", auth_middleware_1.authenticate, customer_controller_1.customerController.getCustomers.bind(customer_controller_1.customerController));
+router.get("/:id/timeline", auth_middleware_1.authenticate, customer_controller_1.customerController.getCustomerTimeline.bind(customer_controller_1.customerController));
+router.post("/:id/notes", auth_middleware_1.authenticate, customer_controller_1.customerController.addCustomerNote.bind(customer_controller_1.customerController));
+router.post("/:id/documents", auth_middleware_1.authenticate, customer_controller_1.customerController.addCustomerDocument.bind(customer_controller_1.customerController));
+router.get("/:id", auth_middleware_1.authenticate, customer_controller_1.customerController.getCustomerById.bind(customer_controller_1.customerController));
+router.put("/:id", auth_middleware_1.authenticate, customer_controller_1.customerController.updateCustomer.bind(customer_controller_1.customerController));
+router.delete("/:id", auth_middleware_1.authenticate, customer_controller_1.customerController.deleteCustomer.bind(customer_controller_1.customerController));
+exports.default = router;

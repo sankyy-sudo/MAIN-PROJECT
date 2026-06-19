@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../../../middleware/auth.middleware");
+const role_middleware_1 = require("../../../middleware/role.middleware");
+const inventory_controller_1 = require("../controllers/inventory.controller");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate);
+router.get("/movements", inventory_controller_1.inventoryController.getMovements.bind(inventory_controller_1.inventoryController));
+router.get("/low-stock", inventory_controller_1.inventoryController.getLowStock.bind(inventory_controller_1.inventoryController));
+router.post("/movements", (0, role_middleware_1.authorize)("SUPER_ADMIN", "ADMIN", "INVENTORY_MANAGER"), inventory_controller_1.inventoryController.createMovement.bind(inventory_controller_1.inventoryController));
+router.put("/thresholds/:productId", (0, role_middleware_1.authorize)("SUPER_ADMIN", "ADMIN", "INVENTORY_MANAGER"), inventory_controller_1.inventoryController.updateThreshold.bind(inventory_controller_1.inventoryController));
+exports.default = router;

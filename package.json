@@ -1,0 +1,16 @@
+{
+  "name": "cotecae-crm-b2b-ecommerce-platform",
+  "private": true,
+  "version": "1.0.0",
+  "description": "COTECAE CRM & B2B E-Commerce Platform",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace backend && npm run build --workspace frontend",
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend"
+  }
+}
