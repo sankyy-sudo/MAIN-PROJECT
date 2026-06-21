@@ -16,7 +16,8 @@ const authenticate = (req, res, next) => {
         req.user = {
             id: decoded.id,
             email: decoded.email,
-            role: decoded.role
+            role: decoded.role,
+            businessAccountId: decoded.businessAccountId
         };
         next();
     }
@@ -38,7 +39,8 @@ const optionalAuthenticate = (req, _res, next) => {
         req.user = {
             id: decoded.id,
             email: decoded.email,
-            role: decoded.role
+            role: decoded.role,
+            businessAccountId: decoded.businessAccountId
         };
     }
     catch {

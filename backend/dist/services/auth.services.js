@@ -30,8 +30,8 @@ class AuthService {
             refreshToken: (0, jwt_1.generateRefreshToken)(user)
         };
     }
-    async loginCustomer(email, password) {
-        const result = await this.login(email, password);
+    async loginCustomer(email, password, twoFactorCode) {
+        const result = await this.login(email, password, twoFactorCode);
         if (result.user.role !== User_1.UserRole.CUSTOMER) {
             throw new Error("Customer account required");
         }
@@ -54,20 +54,74 @@ class AuthService {
             refreshToken: (0, jwt_1.generateRefreshToken)(user)
         };
     }
-    async login(email, password) {
+    async login(email, password, twoFactorCode) {
         const user = await User_1.User.scope("withPassword").findOne({
             where: { email: email.toLowerCase() }
         });
-        if (!user || !(await bcryptjs_1.default.compare(password, user.password))) {
+        if (!user) {
             throw new Error("Invalid credentials");
         }
+        if (user.lockUntil && user.lockUntil > new Date()) {
+            throw new Error("Account is temporarily locked");
+        }
+        if (!(await bcryptjs_1.default.compare(password, user.password))) {
+            const failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+            await user.update({
+                failedLoginAttempts,
+                lockUntil: failedLoginAttempts >= Number(process.env.ACCOUNT_LOCKOUT_ATTEMPTS || 5)
+                    ? new Date(Date.now() + Number(process.env.ACCOUNT_LOCKOUT_MINUTES || 15) * 60 * 1000)
+                    : null
+            });
+            throw new Error("Invalid credentials");
+        }
+        if (user.twoFactorEnabled && !this.verifyTwoFactorCode(user, twoFactorCode)) {
+            throw new Error("Two-factor code required");
+        }
         user.lastLogin = new Date();
+        user.failedLoginAttempts = 0;
+        user.lockUntil = null;
         await user.save();
         return {
             user,
             accessToken: (0, jwt_1.generateAccessToken)(user),
             refreshToken: (0, jwt_1.generateRefreshToken)(user)
         };
+    }
+    generateTwoFactorCode(user) {
+        if (!user.twoFactorSecret)
+            return null;
+        const bucket = Math.floor(Date.now() / (5 * 60 * 1000));
+        return crypto_1.default
+            .createHmac("sha256", user.twoFactorSecret)
+            .update(String(bucket))
+            .digest("hex")
+            .slice(0, 6)
+            .toUpperCase();
+    }
+    verifyTwoFactorCode(user, code) {
+        if (!code)
+            return false;
+        const current = this.generateTwoFactorCode(user);
+        return current === code.trim().toUpperCase();
+    }
+    async enableTwoFactor(userId) {
+        const user = await User_1.User.findByPk(userId);
+        if (!user)
+            throw new Error("User not found");
+        const secret = crypto_1.default.randomBytes(24).toString("hex");
+        await user.update({ twoFactorSecret: secret, twoFactorEnabled: true });
+        return {
+            enabled: true,
+            secret,
+            currentCode: process.env.NODE_ENV === "production" ? undefined : this.generateTwoFactorCode(user)
+        };
+    }
+    async disableTwoFactor(userId) {
+        const user = await User_1.User.findByPk(userId);
+        if (!user)
+            throw new Error("User not found");
+        await user.update({ twoFactorEnabled: false, twoFactorSecret: null });
+        return { enabled: false };
     }
     async getProfile(userId) {
         return User_1.User.findByPk(userId);

@@ -9,6 +9,7 @@ interface AuthUser {
   name: string;
   email: string;
   role: string;
+  businessAccountId?: string | null;
 }
 
 interface AuthState {

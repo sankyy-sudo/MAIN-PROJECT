@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Payment = exports.PaymentRecordStatus = void 0;
+exports.Payment = exports.PaymentProvider = exports.PaymentRecordStatus = void 0;
 const sequelize_1 = require("sequelize");
 const database_1 = require("../../../config/database");
 var PaymentRecordStatus;
@@ -10,6 +10,12 @@ var PaymentRecordStatus;
     PaymentRecordStatus["FAILED"] = "FAILED";
     PaymentRecordStatus["REFUNDED"] = "REFUNDED";
 })(PaymentRecordStatus || (exports.PaymentRecordStatus = PaymentRecordStatus = {}));
+var PaymentProvider;
+(function (PaymentProvider) {
+    PaymentProvider["STRIPE"] = "STRIPE";
+    PaymentProvider["PAYPAL"] = "PAYPAL";
+    PaymentProvider["BANK_TRANSFER"] = "BANK_TRANSFER";
+})(PaymentProvider || (exports.PaymentProvider = PaymentProvider = {}));
 class Payment extends sequelize_1.Model {
 }
 exports.Payment = Payment;
@@ -19,9 +25,15 @@ Payment.init({
     orderId: { type: sequelize_1.DataTypes.UUID, allowNull: false },
     stripePaymentIntentId: {
         type: sequelize_1.DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
         unique: true
     },
+    provider: {
+        type: sequelize_1.DataTypes.ENUM(...Object.values(PaymentProvider)),
+        allowNull: false,
+        defaultValue: PaymentProvider.STRIPE
+    },
+    providerReference: sequelize_1.DataTypes.STRING,
     amount: { type: sequelize_1.DataTypes.DECIMAL(12, 2), allowNull: false },
     currency: {
         type: sequelize_1.DataTypes.STRING(3),

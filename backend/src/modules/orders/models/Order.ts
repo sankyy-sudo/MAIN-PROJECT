@@ -17,6 +17,13 @@ export enum PaymentStatus {
   REFUNDED = "REFUNDED"
 }
 
+export enum PaymentMethod {
+  STRIPE = "STRIPE",
+  PAYPAL = "PAYPAL",
+  BANK_TRANSFER = "BANK_TRANSFER",
+  MANUAL = "MANUAL"
+}
+
 export interface IOrder {
   id: string;
   readonly _id: string;
@@ -25,6 +32,8 @@ export interface IOrder {
   businessAccountId?: string | null;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  couponCode?: string | null;
   subtotal: number;
   discountAmount: number;
   taxAmount: number;
@@ -46,6 +55,8 @@ type OrderCreation = Optional<
   | "businessAccountId"
   | "status"
   | "paymentStatus"
+  | "paymentMethod"
+  | "couponCode"
   | "discountAmount"
   | "taxAmount"
   | "shippingAmount"
@@ -62,6 +73,8 @@ export class Order extends Model<IOrder, OrderCreation> implements IOrder {
   declare businessAccountId: string | null;
   declare status: OrderStatus;
   declare paymentStatus: PaymentStatus;
+  declare paymentMethod: PaymentMethod;
+  declare couponCode: string | null;
   declare subtotal: number;
   declare discountAmount: number;
   declare taxAmount: number;
@@ -91,6 +104,12 @@ Order.init(
       allowNull: false,
       defaultValue: PaymentStatus.PENDING
     },
+    paymentMethod: {
+      type: DataTypes.ENUM(...Object.values(PaymentMethod)),
+      allowNull: false,
+      defaultValue: PaymentMethod.STRIPE
+    },
+    couponCode: DataTypes.STRING,
     subtotal: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
     discountAmount: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
     taxAmount: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },

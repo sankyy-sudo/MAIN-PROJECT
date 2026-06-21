@@ -48,8 +48,16 @@ const ProductCard = ({ product }: ProductCardProps) => {
             {product.categoryDetails?.name || product.brandDetails?.name || product.sku}
           </Typography>
           <Typography variant="h6" color="primary">
-            {formatCurrency(product.retailPrice)}
+            {formatCurrency(product.b2bPrice ?? product.retailPrice)}
           </Typography>
+          {product.b2bPrice !== undefined && (
+            <Chip
+              label={`${product.pricingTier || "B2B"} price`}
+              color="success"
+              size="small"
+              sx={{ alignSelf: "flex-start" }}
+            />
+          )}
           {product.wholesalePrice !== undefined && (
             <Typography variant="body2" color="text.secondary">
               Wholesale: {formatCurrency(product.wholesalePrice)}

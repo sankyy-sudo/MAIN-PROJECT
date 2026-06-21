@@ -8,11 +8,19 @@ export enum PaymentRecordStatus {
   REFUNDED = "REFUNDED"
 }
 
+export enum PaymentProvider {
+  STRIPE = "STRIPE",
+  PAYPAL = "PAYPAL",
+  BANK_TRANSFER = "BANK_TRANSFER"
+}
+
 export interface IPayment {
   id: string;
   readonly _id: string;
   orderId: string;
-  stripePaymentIntentId: string;
+  stripePaymentIntentId?: string | null;
+  provider: PaymentProvider;
+  providerReference?: string | null;
   amount: number;
   currency: string;
   status: PaymentRecordStatus;
@@ -23,7 +31,16 @@ export interface IPayment {
 
 type PaymentCreation = Optional<
   IPayment,
-  "id" | "_id" | "currency" | "status" | "metadata" | "createdAt" | "updatedAt"
+  | "id"
+  | "_id"
+  | "stripePaymentIntentId"
+  | "provider"
+  | "providerReference"
+  | "currency"
+  | "status"
+  | "metadata"
+  | "createdAt"
+  | "updatedAt"
 >;
 
 export class Payment
@@ -33,7 +50,9 @@ export class Payment
   declare id: string;
   declare readonly _id: string;
   declare orderId: string;
-  declare stripePaymentIntentId: string;
+  declare stripePaymentIntentId: string | null;
+  declare provider: PaymentProvider;
+  declare providerReference: string | null;
   declare amount: number;
   declare currency: string;
   declare status: PaymentRecordStatus;
@@ -49,9 +68,15 @@ Payment.init(
     orderId: { type: DataTypes.UUID, allowNull: false },
     stripePaymentIntentId: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       unique: true
     },
+    provider: {
+      type: DataTypes.ENUM(...Object.values(PaymentProvider)),
+      allowNull: false,
+      defaultValue: PaymentProvider.STRIPE
+    },
+    providerReference: DataTypes.STRING,
     amount: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
     currency: {
       type: DataTypes.STRING(3),

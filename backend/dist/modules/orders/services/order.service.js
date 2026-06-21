@@ -5,6 +5,9 @@ const sequelize_1 = require("sequelize");
 const database_1 = require("../../../config/database");
 const User_1 = require("../../../models/User");
 const BusinessAccount_1 = require("../../b2b/models/BusinessAccount");
+const Cart_1 = require("../../cart/models/Cart");
+const CartItem_1 = require("../../cart/models/CartItem");
+const commerce_service_1 = require("../../commerce/services/commerce.service");
 const Customer_1 = require("../../crm/models/Customer");
 const InventoryMovement_1 = require("../../inventory/models/InventoryMovement");
 const Product_1 = require("../../inventory/models/Product");
@@ -23,6 +26,7 @@ const orderIncludes = [
 ];
 const makeNumber = (value) => Number(value || 0);
 const makeCode = (prefix) => `${prefix}-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+const commerceService = new commerce_service_1.CommerceService();
 class OrderService {
     async createOrder(input) {
         if (!input.items?.length)
@@ -41,7 +45,8 @@ class OrderService {
                 });
                 if (!product || !product.isActive)
                     throw new Error("Product not found or inactive");
-                if (product.stockQuantity < item.quantity) {
+                const availableToSell = product.stockQuantity + (product.allowPreOrder ? product.preOrderLimit : 0);
+                if (availableToSell < item.quantity) {
                     throw new Error(`Insufficient stock for ${product.name}`);
                 }
                 const unitPrice = item.unitPrice ?? makeNumber(product.retailPrice);
@@ -52,10 +57,24 @@ class OrderService {
                     lineTotal: unitPrice * item.quantity
                 });
             }
-            const subtotal = lineItems.reduce((sum, item) => sum + item.lineTotal, 0);
-            const discountAmount = Math.max(makeNumber(input.discountAmount), 0);
-            const taxAmount = Math.max(makeNumber(input.taxAmount), 0);
-            const shippingAmount = Math.max(makeNumber(input.shippingAmount), 0);
+            const quote = await commerceService.quote({
+                items: lineItems.map((item) => ({
+                    productId: item.product.id,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice
+                })),
+                couponCode: input.couponCode
+            });
+            const subtotal = quote.subtotal;
+            const discountAmount = input.discountAmount === undefined
+                ? quote.discountAmount
+                : Math.max(makeNumber(input.discountAmount), 0);
+            const taxAmount = input.taxAmount === undefined
+                ? quote.taxAmount
+                : Math.max(makeNumber(input.taxAmount), 0);
+            const shippingAmount = input.shippingAmount === undefined
+                ? quote.shippingAmount
+                : Math.max(makeNumber(input.shippingAmount), 0);
             const totalAmount = Math.max(subtotal - discountAmount + taxAmount + shippingAmount, 0);
             const order = await Order_1.Order.create({
                 orderNumber: makeCode("ORD"),
@@ -66,13 +85,15 @@ class OrderService {
                 taxAmount,
                 shippingAmount,
                 totalAmount,
+                couponCode: input.couponCode?.trim().toUpperCase(),
+                paymentMethod: input.paymentMethod || Order_1.PaymentMethod.STRIPE,
                 shippingAddress: input.shippingAddress,
                 notes: input.notes,
                 createdBy: input.createdBy
             }, { transaction });
             for (const item of lineItems) {
                 const previousQuantity = item.product.stockQuantity;
-                const newQuantity = previousQuantity - item.quantity;
+                const newQuantity = Math.max(previousQuantity - item.quantity, 0);
                 await item.product.update({ stockQuantity: newQuantity }, { transaction });
                 await OrderItem_1.OrderItem.create({
                     orderId: order.id,
@@ -105,12 +126,14 @@ class OrderService {
                 invoiceNumber: makeCode("INV"),
                 amount: totalAmount
             }, { transaction });
+            await commerceService.incrementCouponUsage(input.couponCode);
             return this.getOrderById(order.id, transaction);
         });
         if (createdOrder) {
             const value = createdOrder.toJSON();
             const recipient = value.customer?.email ||
-                value.businessAccount?.email;
+                value.businessAccount?.email ||
+                value.creator?.email;
             if (recipient) {
                 await (0, email_1.sendTemplateEmail)(recipient, email_1.emailTemplates.orderConfirmation(value, value.items || [], value.customer?.contactPerson ||
                     value.businessAccount?.contactPerson ||
@@ -119,10 +142,77 @@ class OrderService {
         }
         return createdOrder;
     }
+    async createOrderFromCart(input) {
+        const user = await User_1.User.findByPk(input.customerUserId);
+        const cart = await Cart_1.Cart.findOne({
+            where: { customerId: input.customerUserId },
+            include: [{ model: CartItem_1.CartItem, as: "items" }]
+        });
+        const items = (cart?.items || []);
+        if (!cart || items.length === 0) {
+            throw new Error("Cart is empty");
+        }
+        const order = await this.createOrder({
+            items: items.map((item) => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                unitPrice: Number(item.unitPrice)
+            })),
+            shippingAddress: input.shippingAddress,
+            notes: input.notes,
+            couponCode: input.couponCode,
+            paymentMethod: input.paymentMethod,
+            discountAmount: input.discountAmount,
+            taxAmount: input.taxAmount,
+            shippingAmount: input.shippingAmount,
+            businessAccountId: user?.businessAccountId || undefined,
+            createdBy: input.customerUserId
+        });
+        await CartItem_1.CartItem.destroy({ where: { cartId: cart.id } });
+        return order;
+    }
+    async createBusinessBulkOrder(input) {
+        const user = await User_1.User.findByPk(input.customerUserId);
+        if (!user?.businessAccountId) {
+            throw new Error("Professional access is required for bulk orders");
+        }
+        const account = await BusinessAccount_1.BusinessAccount.findByPk(user.businessAccountId);
+        if (!account)
+            throw new Error("Business account not found");
+        if (!account.bulkOrdersEnabled) {
+            throw new Error("Bulk ordering is not enabled for this account");
+        }
+        const items = await Promise.all(input.items.map(async (item) => {
+            const product = await Product_1.Product.findByPk(item.productId);
+            if (!product || !product.isActive) {
+                throw new Error("Product not found or inactive");
+            }
+            const customPrice = account.customPricing?.find((price) => price.sku === product.sku);
+            const wholesalePrice = Number(product.wholesalePrice);
+            const discount = Number(account.discountPercentage || 0);
+            return {
+                productId: item.productId,
+                quantity: item.quantity,
+                unitPrice: customPrice
+                    ? Number(customPrice.price)
+                    : Math.max(wholesalePrice - (wholesalePrice * discount) / 100, 0)
+            };
+        }));
+        return this.createOrder({
+            items,
+            shippingAddress: input.shippingAddress,
+            notes: input.notes,
+            paymentMethod: input.paymentMethod,
+            businessAccountId: account.id,
+            createdBy: input.customerUserId
+        });
+    }
     async getOrders(query) {
         const where = {};
         if (query.status)
             Object.assign(where, { status: query.status });
+        if (query.createdBy)
+            Object.assign(where, { createdBy: query.createdBy });
         if (query.search) {
             Object.assign(where, {
                 [sequelize_1.Op.or]: [
@@ -143,6 +233,9 @@ class OrderService {
     }
     async getOrderById(id, transaction) {
         return Order_1.Order.findByPk(id, { include: orderIncludes, transaction });
+    }
+    async getCustomerOrders(customerUserId, page, limit) {
+        return this.getOrders({ createdBy: customerUserId, page, limit });
     }
     async updateStatus(id, status, actorId, message, location) {
         if (!Object.values(Order_1.OrderStatus).includes(status)) {
@@ -197,7 +290,8 @@ class OrderService {
             if (order) {
                 const value = order.toJSON();
                 const recipient = value.customer?.email ||
-                    value.businessAccount?.email;
+                    value.businessAccount?.email ||
+                    value.creator?.email;
                 if (recipient) {
                     await (0, email_1.sendTemplateEmail)(recipient, email_1.emailTemplates.orderShipped(value, location));
                 }
@@ -222,6 +316,48 @@ class OrderService {
         if (!invoice)
             throw new Error("Invoice not found");
         return invoice;
+    }
+    renderInvoiceDocument(invoice) {
+        const value = invoice.toJSON();
+        const order = value.order || {};
+        const items = order.items || [];
+        const content = [
+            `Invoice: ${value.invoiceNumber}`,
+            `Order: ${order.orderNumber || value.orderId}`,
+            `Issued: ${new Date(value.issuedAt).toLocaleDateString()}`,
+            `Status: ${order.status || "PENDING"}`,
+            "",
+            "Items",
+            ...items.map((item) => `${item.productName} (${item.sku}) x ${item.quantity} = ${item.lineTotal}`),
+            "",
+            `Subtotal: ${order.subtotal || 0}`,
+            `Discount: ${order.discountAmount || 0}`,
+            `Tax: ${order.taxAmount || 0}`,
+            `Shipping: ${order.shippingAmount || 0}`,
+            `Total: ${value.amount}`
+        ].join("\n");
+        return {
+            fileName: `${value.invoiceNumber}.txt`,
+            content
+        };
+    }
+    renderPackingSlip(order) {
+        const value = order.toJSON();
+        const items = value.items || [];
+        const content = [
+            `Packing Slip: ${value.orderNumber}`,
+            `Ship to: ${value.shippingAddress}`,
+            `Status: ${value.status}`,
+            "",
+            "Items",
+            ...items.map((item) => `${item.productName} (${item.sku}) x ${item.quantity}`),
+            "",
+            `Notes: ${value.notes || ""}`
+        ].join("\n");
+        return {
+            fileName: `${value.orderNumber}-packing-slip.txt`,
+            content
+        };
     }
     async createRefund(id, amount, reason, actorId) {
         const order = await Order_1.Order.findByPk(id);

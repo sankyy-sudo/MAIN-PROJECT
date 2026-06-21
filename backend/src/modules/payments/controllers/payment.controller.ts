@@ -33,6 +33,32 @@ export class PaymentController {
     }
   }
 
+  async bankTransfer(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await service.createBankTransferInstruction(req.body.orderId);
+      return res.status(201).json({
+        success: true,
+        message: "Bank transfer instructions created",
+        data
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async paypalOrder(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await service.createPayPalOrder(req.body.orderId);
+      return res.status(201).json({
+        success: true,
+        message: "PayPal foundation order created",
+        data
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   async webhook(req: Request, res: Response) {
     try {
       const signature = req.headers["stripe-signature"];

@@ -26,6 +26,7 @@ const StoreHeader = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((state: RootState) => state.auth.user);
+  const token = useSelector((state: RootState) => state.auth.token);
   const cartCount = useSelector(selectCartItemCount);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [accountAnchor, setAccountAnchor] = useState<null | HTMLElement>(null);
@@ -52,6 +53,8 @@ const StoreHeader = () => {
 
           <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2, mx: "auto" }}>
             <Button color="inherit" component={Link} to="/store/products">Shop</Button>
+            <Button color="inherit" component={Link} to="/professional/dashboard">Professional</Button>
+            <Button color="inherit" component={Link} to="/academy">Academy</Button>
             <Button color="inherit" component={Link} to="/store/about">About</Button>
             <Button color="inherit" component={Link} to="/store/contact">Contact</Button>
           </Box>
@@ -65,7 +68,7 @@ const StoreHeader = () => {
             </Badge>
           </IconButton>
 
-          {user ? (
+          {user || token ? (
             <>
               <IconButton color="inherit" onClick={(event) => setAccountAnchor(event.currentTarget)}>
                 <AccountCircleIcon />
@@ -76,6 +79,7 @@ const StoreHeader = () => {
                 onClose={() => setAccountAnchor(null)}
               >
                 <MenuItem onClick={() => navigate("/account/orders")}>My Orders</MenuItem>
+                <MenuItem onClick={() => navigate("/account/profile")}>Profile</MenuItem>
                 <MenuItem
                   onClick={() => {
                     dispatch(logout());

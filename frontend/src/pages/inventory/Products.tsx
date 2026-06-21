@@ -37,6 +37,8 @@ interface Product {
   retailPrice: number;
   wholesalePrice: number;
   stockQuantity: number;
+  allowPreOrder: boolean;
+  preOrderLimit: number;
 }
 
 const categoryForm = {
@@ -59,7 +61,9 @@ const productForm = {
   brand: "",
   retailPrice: "",
   wholesalePrice: "",
-  stockQuantity: ""
+  stockQuantity: "",
+  allowPreOrder: false,
+  preOrderLimit: ""
 };
 
 const Products = () => {
@@ -170,7 +174,9 @@ const Products = () => {
       ),
       stockQuantity: Number(
         productData.stockQuantity
-      )
+      ),
+      allowPreOrder: productData.allowPreOrder,
+      preOrderLimit: Number(productData.preOrderLimit || 0)
     });
     setProductData(productForm);
     await loadCatalog();
@@ -351,6 +357,29 @@ const Products = () => {
                   "stockQuantity"
                 )}
               />
+              <TextField
+                select
+                label="Pre-order"
+                value={String(productData.allowPreOrder)}
+                onChange={(event) =>
+                  setProductData({
+                    ...productData,
+                    allowPreOrder:
+                      event.target.value === "true"
+                  })
+                }
+              >
+                <MenuItem value="false">Disabled</MenuItem>
+                <MenuItem value="true">Enabled</MenuItem>
+              </TextField>
+              <TextField
+                label="Pre-order Limit"
+                type="number"
+                value={productData.preOrderLimit}
+                onChange={changeProduct(
+                  "preOrderLimit"
+                )}
+              />
               <Button
                 variant="contained"
                 onClick={createProduct}
@@ -383,6 +412,10 @@ const Products = () => {
                 Retail: {product.retailPrice} / Wholesale:{" "}
                 {product.wholesalePrice} / Stock:{" "}
                 {product.stockQuantity}
+              </Typography>
+              <Typography>
+                Pre-order: {product.allowPreOrder ? "Enabled" : "Disabled"} / Limit:{" "}
+                {product.preOrderLimit || 0}
               </Typography>
               <Typography>
                 {product.description}

@@ -11,6 +11,8 @@ router.post("/customer/register", (0, validate_middleware_1.validate)(auth_valid
 router.post("/customer/login", (0, validate_middleware_1.validate)(auth_validations_1.loginSchema), auth_controller_1.authController.customerLogin.bind(auth_controller_1.authController));
 router.post("/login", (0, validate_middleware_1.validate)(auth_validations_1.loginSchema), auth_controller_1.authController.login.bind(auth_controller_1.authController));
 router.get("/profile", auth_middleware_1.authenticate, auth_controller_1.authController.profile.bind(auth_controller_1.authController));
+router.post("/2fa/enable", auth_middleware_1.authenticate, auth_controller_1.authController.enableTwoFactor.bind(auth_controller_1.authController));
+router.post("/2fa/disable", auth_middleware_1.authenticate, auth_controller_1.authController.disableTwoFactor.bind(auth_controller_1.authController));
 router.post("/logout", auth_middleware_1.authenticate, auth_controller_1.authController.logout.bind(auth_controller_1.authController));
 router.post("/refresh-token", auth_controller_1.authController.refresh.bind(auth_controller_1.authController));
 router.post("/forgot-password", (0, validate_middleware_1.validate)(auth_validations_1.forgotPasswordSchema), auth_controller_1.authController.forgotPassword.bind(auth_controller_1.authController));

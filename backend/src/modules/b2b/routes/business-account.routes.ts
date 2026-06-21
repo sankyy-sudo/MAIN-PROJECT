@@ -6,6 +6,27 @@ import { businessAccountController } from "../controllers/business-account.contr
 const router = Router();
 
 router.post(
+  "/request-access",
+  authenticate,
+  authorize("CUSTOMER", "SUPER_ADMIN", "ADMIN", "SALES_MANAGER"),
+  businessAccountController.requestBusinessAccess.bind(
+    businessAccountController
+  )
+);
+
+router.get(
+  "/me/dashboard",
+  authenticate,
+  businessAccountController.myDashboard.bind(businessAccountController)
+);
+
+router.get(
+  "/me/invoices",
+  authenticate,
+  businessAccountController.myInvoices.bind(businessAccountController)
+);
+
+router.post(
   "/",
   authenticate,
   authorize("SUPER_ADMIN", "ADMIN", "SALES_MANAGER"),

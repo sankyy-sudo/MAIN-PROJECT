@@ -5,6 +5,7 @@ const sequelize_1 = require("sequelize");
 const BusinessAccount_1 = require("../models/BusinessAccount");
 const Invoice_1 = require("../../orders/models/Invoice");
 const Order_1 = require("../../orders/models/Order");
+const User_1 = require("../../../models/User");
 const tierDiscounts = {
     [BusinessAccount_1.PricingTier.SILVER]: 5,
     [BusinessAccount_1.PricingTier.GOLD]: 10,
@@ -43,6 +44,48 @@ class BusinessAccountService {
     }
     async getBusinessAccountById(id) {
         return BusinessAccount_1.BusinessAccount.findByPk(id);
+    }
+    async requestBusinessAccess(userId, data) {
+        const user = await User_1.User.findByPk(userId);
+        if (!user)
+            throw new Error("User not found");
+        if (user.businessAccountId) {
+            throw new Error("Your user is already linked to a business account");
+        }
+        const existing = await BusinessAccount_1.BusinessAccount.findOne({
+            where: {
+                [sequelize_1.Op.or]: [
+                    { gstNumber: String(data.gstNumber || "").trim().toUpperCase() },
+                    { email: String(data.email || user.email).trim().toLowerCase() }
+                ]
+            }
+        });
+        const account = existing ||
+            (await this.createBusinessAccount({
+                companyName: data.companyName,
+                gstNumber: data.gstNumber,
+                businessAddress: data.businessAddress,
+                contactPerson: data.contactPerson || user.name,
+                email: data.email || user.email,
+                phone: data.phone,
+                pricingTier: data.pricingTier || BusinessAccount_1.PricingTier.SILVER
+            }));
+        await user.update({ businessAccountId: account.id });
+        return { account, user };
+    }
+    async getMyBusinessAccount(userId) {
+        const user = await User_1.User.findByPk(userId);
+        if (!user?.businessAccountId) {
+            throw new Error("No business account linked to this user");
+        }
+        return this.getAccountDashboard(user.businessAccountId);
+    }
+    async getMyInvoices(userId) {
+        const user = await User_1.User.findByPk(userId);
+        if (!user?.businessAccountId) {
+            throw new Error("No business account linked to this user");
+        }
+        return this.getInvoices(user.businessAccountId);
     }
     async updateBusinessAccount(id, data) {
         const account = await BusinessAccount_1.BusinessAccount.findByPk(id);

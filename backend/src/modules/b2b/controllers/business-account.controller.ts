@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { PricingTier } from "../models/BusinessAccount";
 import { BusinessAccountService } from "../services/business-account.service";
+import { generateAccessToken } from "../../../utils/jwt";
 
 const service = new BusinessAccountService();
 
@@ -8,6 +9,49 @@ const getParamId = (id: string | string[]) =>
   Array.isArray(id) ? id[0] : id;
 
 export class BusinessAccountController {
+  async requestBusinessAccess(req: Request, res: Response) {
+    try {
+      const result = await service.requestBusinessAccess(req.user!.id, req.body);
+      return res.status(201).json({
+        success: true,
+        message: "Professional access enabled",
+        data: {
+          ...result,
+          accessToken: generateAccessToken(result.user)
+        }
+      });
+    } catch (error: any) {
+      return res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  async myDashboard(req: Request, res: Response) {
+    try {
+      const result = await service.getMyBusinessAccount(req.user!.id);
+      return res.json({ success: true, data: result });
+    } catch (error: any) {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  async myInvoices(req: Request, res: Response) {
+    try {
+      const invoices = await service.getMyInvoices(req.user!.id);
+      return res.json({ success: true, data: invoices });
+    } catch (error: any) {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
   async createBusinessAccount(
     req: Request,
     res: Response

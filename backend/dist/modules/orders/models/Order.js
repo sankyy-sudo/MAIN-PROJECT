@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Order = exports.PaymentStatus = exports.OrderStatus = void 0;
+exports.Order = exports.PaymentMethod = exports.PaymentStatus = exports.OrderStatus = void 0;
 const sequelize_1 = require("sequelize");
 const database_1 = require("../../../config/database");
 var OrderStatus;
@@ -19,6 +19,13 @@ var PaymentStatus;
     PaymentStatus["PARTIALLY_REFUNDED"] = "PARTIALLY_REFUNDED";
     PaymentStatus["REFUNDED"] = "REFUNDED";
 })(PaymentStatus || (exports.PaymentStatus = PaymentStatus = {}));
+var PaymentMethod;
+(function (PaymentMethod) {
+    PaymentMethod["STRIPE"] = "STRIPE";
+    PaymentMethod["PAYPAL"] = "PAYPAL";
+    PaymentMethod["BANK_TRANSFER"] = "BANK_TRANSFER";
+    PaymentMethod["MANUAL"] = "MANUAL";
+})(PaymentMethod || (exports.PaymentMethod = PaymentMethod = {}));
 class Order extends sequelize_1.Model {
 }
 exports.Order = Order;
@@ -38,6 +45,12 @@ Order.init({
         allowNull: false,
         defaultValue: PaymentStatus.PENDING
     },
+    paymentMethod: {
+        type: sequelize_1.DataTypes.ENUM(...Object.values(PaymentMethod)),
+        allowNull: false,
+        defaultValue: PaymentMethod.STRIPE
+    },
+    couponCode: sequelize_1.DataTypes.STRING,
     subtotal: { type: sequelize_1.DataTypes.DECIMAL(12, 2), allowNull: false },
     discountAmount: { type: sequelize_1.DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
     taxAmount: { type: sequelize_1.DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },

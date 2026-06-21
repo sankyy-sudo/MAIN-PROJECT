@@ -1,5 +1,6 @@
 import { Op, WhereOptions } from "sequelize";
 import { UserRole } from "../../../models/User";
+import { BusinessAccount } from "../../b2b/models/BusinessAccount";
 import { Brand } from "../models/Brand";
 import { Category } from "../models/Category";
 import { InventorySetting } from "../models/InventorySetting";
@@ -18,6 +19,7 @@ interface PublicProductQuery {
 
 interface PublicViewer {
   role?: UserRole;
+  businessAccountId?: string | null;
 }
 
 const publicIncludes = [
@@ -32,13 +34,14 @@ const detailIncludes = [
 
 const canSeeWholesale = (viewer?: PublicViewer) =>
   Boolean(
-    viewer?.role &&
+    viewer?.businessAccountId ||
+      (viewer?.role &&
       [
         UserRole.SUPER_ADMIN,
         UserRole.ADMIN,
         UserRole.SALES_MANAGER,
         UserRole.INVENTORY_MANAGER
-      ].includes(viewer.role)
+      ].includes(viewer.role))
   );
 
 const stockStatus = (product: any) => {
@@ -48,9 +51,30 @@ const stockStatus = (product: any) => {
   return "IN_STOCK";
 };
 
-const serializePublicProduct = (product: Product, viewer?: PublicViewer) => {
+const discountedB2BPrice = (
+  product: Product,
+  account?: BusinessAccount | null
+) => {
+  const wholesalePrice = Number(product.wholesalePrice);
+  if (!account) return wholesalePrice;
+  const custom = account.customPricing?.find((item) => item.sku === product.sku);
+  if (custom) return Number(custom.price);
+  const discount = Number(account.discountPercentage || 0);
+  return Math.max(wholesalePrice - (wholesalePrice * discount) / 100, 0);
+};
+
+const serializePublicProduct = (
+  product: Product,
+  viewer?: PublicViewer,
+  account?: BusinessAccount | null
+) => {
   const value = product.toJSON() as any;
   value.stockStatus = stockStatus(value);
+  if (account) {
+    value.b2bPrice = discountedB2BPrice(product, account);
+    value.pricingTier = account.pricingTier;
+    value.discountPercentage = Number(account.discountPercentage || 0);
+  }
   if (!canSeeWholesale(viewer)) {
     delete value.wholesalePrice;
   }
@@ -83,6 +107,10 @@ export class PublicCatalogService {
       });
     }
 
+    const account = viewer?.businessAccountId
+      ? await BusinessAccount.findByPk(viewer.businessAccountId)
+      : null;
+
     const { rows, count } = await Product.findAndCountAll({
       where,
       include: publicIncludes,
@@ -93,7 +121,9 @@ export class PublicCatalogService {
     });
 
     return {
-      products: rows.map((product) => serializePublicProduct(product, viewer)),
+      products: rows.map((product) =>
+        serializePublicProduct(product, viewer, account)
+      ),
       total: count,
       page: query.page,
       limit: query.limit,
@@ -102,11 +132,14 @@ export class PublicCatalogService {
   }
 
   async getProductById(id: string, viewer?: PublicViewer) {
+    const account = viewer?.businessAccountId
+      ? await BusinessAccount.findByPk(viewer.businessAccountId)
+      : null;
     const product = await Product.findOne({
       where: { id, isActive: true },
       include: detailIncludes
     });
-    return product ? serializePublicProduct(product, viewer) : null;
+    return product ? serializePublicProduct(product, viewer, account) : null;
   }
 
   async getCategories() {

@@ -9,6 +9,9 @@ export interface IProduct {
   brand: string;
   retailPrice: number;
   wholesalePrice?: number;
+  b2bPrice?: number;
+  pricingTier?: string;
+  discountPercentage?: number;
   stockQuantity: number;
   isActive: boolean;
   categoryDetails?: { id: string; name: string };

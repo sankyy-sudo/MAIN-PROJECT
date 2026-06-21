@@ -17,6 +17,18 @@ import { Refund } from "../modules/orders/models/Refund";
 import { Payment } from "../modules/payments/models/Payment";
 import { Cart } from "../modules/cart/models/Cart";
 import { CartItem } from "../modules/cart/models/CartItem";
+import "../modules/cms/models/AcademyWaitlist";
+import "../modules/cms/models/Banner";
+import "../modules/cms/models/CmsPage";
+import "../modules/cms/models/ContentPost";
+import "../modules/cms/models/SiteSetting";
+import "../modules/commerce/models/CommerceSetting";
+import "../modules/commerce/models/Coupon";
+import "../modules/commerce/models/ShippingRule";
+import "../modules/commerce/models/TaxSetting";
+import "../modules/marketing/models/EmailAutomationLog";
+import "../modules/marketing/models/MarketingCampaign";
+import "../modules/marketing/models/NewsletterSubscriber";
 
 Product.belongsTo(Category, { as: "categoryDetails", foreignKey: "category" });
 Category.hasMany(Product, { foreignKey: "category" });

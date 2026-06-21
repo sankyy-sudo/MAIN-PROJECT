@@ -28,6 +28,10 @@ export interface IUser {
   lastLogin?: Date | null;
   passwordResetToken?: string | null;
   passwordResetExpires?: Date | null;
+  failedLoginAttempts: number;
+  lockUntil?: Date | null;
+  twoFactorEnabled: boolean;
+  twoFactorSecret?: string | null;
   businessAccountId?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -43,6 +47,10 @@ type UserCreationAttributes = Optional<
   | "lastLogin"
   | "passwordResetToken"
   | "passwordResetExpires"
+  | "failedLoginAttempts"
+  | "lockUntil"
+  | "twoFactorEnabled"
+  | "twoFactorSecret"
   | "businessAccountId"
   | "createdAt"
   | "updatedAt"
@@ -63,6 +71,10 @@ export class User
   declare lastLogin: Date | null;
   declare passwordResetToken: string | null;
   declare passwordResetExpires: Date | null;
+  declare failedLoginAttempts: number;
+  declare lockUntil: Date | null;
+  declare twoFactorEnabled: boolean;
+  declare twoFactorSecret: string | null;
   declare businessAccountId: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -115,6 +127,10 @@ User.init(
     lastLogin: DataTypes.DATE,
     passwordResetToken: DataTypes.STRING,
     passwordResetExpires: DataTypes.DATE,
+    failedLoginAttempts: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    lockUntil: DataTypes.DATE,
+    twoFactorEnabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    twoFactorSecret: DataTypes.STRING,
     businessAccountId: DataTypes.UUID,
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE

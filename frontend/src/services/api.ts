@@ -6,8 +6,10 @@ const api = axios.create({
     "http://localhost:5000/api"
 });
 
+let csrfToken: string | null = null;
+
 api.interceptors.request.use(
-  config => {
+  async config => {
     const token =
       localStorage.getItem("token");
     let cartSessionId =
@@ -23,6 +25,23 @@ api.interceptors.request.use(
         `Bearer ${token}`;
     }
     config.headers["x-cart-session-id"] = cartSessionId;
+    const method = config.method?.toUpperCase();
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(method || "")) {
+      if (!csrfToken) {
+        try {
+          const response = await axios.get(
+            `${api.defaults.baseURL}/security/csrf-token`,
+            { withCredentials: true }
+          );
+          csrfToken = response.data.data.csrfToken;
+        } catch {
+          csrfToken = null;
+        }
+      }
+      if (csrfToken) {
+        config.headers["x-csrf-token"] = csrfToken;
+      }
+    }
 
     return config;
   }

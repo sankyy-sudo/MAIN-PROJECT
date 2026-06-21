@@ -13,6 +13,8 @@ export interface IProduct {
   retailPrice: number;
   wholesalePrice: number;
   stockQuantity: number;
+  allowPreOrder: boolean;
+  preOrderLimit: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -20,7 +22,16 @@ export interface IProduct {
 
 type ProductCreation = Optional<
   IProduct,
-  "id" | "_id" | "description" | "images" | "stockQuantity" | "isActive" | "createdAt" | "updatedAt"
+  | "id"
+  | "_id"
+  | "description"
+  | "images"
+  | "stockQuantity"
+  | "allowPreOrder"
+  | "preOrderLimit"
+  | "isActive"
+  | "createdAt"
+  | "updatedAt"
 >;
 
 export class Product
@@ -38,6 +49,8 @@ export class Product
   declare retailPrice: number;
   declare wholesalePrice: number;
   declare stockQuantity: number;
+  declare allowPreOrder: boolean;
+  declare preOrderLimit: number;
   declare isActive: boolean;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -63,6 +76,8 @@ Product.init(
     retailPrice: { type: DataTypes.DECIMAL(12, 2), allowNull: false, validate: { min: 0 } },
     wholesalePrice: { type: DataTypes.DECIMAL(12, 2), allowNull: false, validate: { min: 0 } },
     stockQuantity: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0, validate: { min: 0 } },
+    allowPreOrder: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    preOrderLimit: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0, validate: { min: 0 } },
     isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE

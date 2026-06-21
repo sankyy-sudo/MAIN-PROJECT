@@ -1,5 +1,7 @@
 import crypto from "crypto";
 import { Op } from "sequelize";
+import { User } from "../../../models/User";
+import { BusinessAccount } from "../../b2b/models/BusinessAccount";
 import { Product } from "../../inventory/models/Product";
 import { Cart } from "../models/Cart";
 import { CartItem } from "../models/CartItem";
@@ -22,6 +24,8 @@ const cartIncludes = [
           "images",
           "retailPrice",
           "stockQuantity",
+          "allowPreOrder",
+          "preOrderLimit",
           "isActive"
         ]
       }
@@ -53,7 +57,26 @@ export class CartService {
     return Cart.findByPk(cartId, { include: cartIncludes });
   }
 
-  async addItem(cartId: string, productId: string, quantity: number) {
+  async getCustomerUnitPrice(product: Product, customerId?: string) {
+    if (!customerId) return Number(product.retailPrice);
+    const user = await User.findByPk(customerId);
+    if (!user?.businessAccountId) return Number(product.retailPrice);
+    const account = await BusinessAccount.findByPk(user.businessAccountId);
+    if (!account) return Number(product.retailPrice);
+
+    const custom = account.customPricing?.find((item) => item.sku === product.sku);
+    if (custom) return Number(custom.price);
+    const wholesalePrice = Number(product.wholesalePrice);
+    const discount = Number(account.discountPercentage || 0);
+    return Math.max(wholesalePrice - (wholesalePrice * discount) / 100, 0);
+  }
+
+  async addItem(
+    cartId: string,
+    productId: string,
+    quantity: number,
+    customerId?: string
+  ) {
     if (!Number.isInteger(quantity) || quantity <= 0) {
       throw new Error("Quantity must be a positive whole number");
     }
@@ -63,18 +86,22 @@ export class CartService {
 
     const existing = await CartItem.findOne({ where: { cartId, productId } });
     const nextQuantity = (existing?.quantity || 0) + quantity;
-    if (product.stockQuantity < nextQuantity) {
+    const availableToSell =
+      product.stockQuantity + (product.allowPreOrder ? product.preOrderLimit : 0);
+    if (availableToSell < nextQuantity) {
       throw new Error("Requested quantity exceeds available stock");
     }
 
+    const unitPrice = await this.getCustomerUnitPrice(product, customerId);
+
     if (existing) {
-      await existing.update({ quantity: nextQuantity });
+      await existing.update({ quantity: nextQuantity, unitPrice });
     } else {
       await CartItem.create({
         cartId,
         productId,
         quantity,
-        unitPrice: Number(product.retailPrice)
+        unitPrice
       });
     }
     return this.getCartWithItems(cartId);
@@ -91,11 +118,16 @@ export class CartService {
 
     const product = await Product.findByPk(item.productId);
     if (!product || !product.isActive) throw new Error("Product not available");
-    if (product.stockQuantity < quantity) {
+    const availableToSell =
+      product.stockQuantity + (product.allowPreOrder ? product.preOrderLimit : 0);
+    if (availableToSell < quantity) {
       throw new Error("Requested quantity exceeds available stock");
     }
 
-    await item.update({ quantity });
+    await item.update({
+      quantity,
+      unitPrice: await this.getCustomerUnitPrice(product, (await Cart.findByPk(cartId))?.customerId || undefined)
+    });
     return this.getCartWithItems(cartId);
   }
 
@@ -127,7 +159,7 @@ export class CartService {
 
     const items = ((guestCart as any).items || []) as CartItem[];
     for (const item of items) {
-      await this.addItem(customerCart.id, item.productId, item.quantity);
+      await this.addItem(customerCart.id, item.productId, item.quantity, customerId);
     }
     await guestCart.destroy();
     return this.getCartWithItems(customerCart.id);

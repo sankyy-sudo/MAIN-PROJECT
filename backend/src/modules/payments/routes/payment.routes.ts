@@ -11,6 +11,16 @@ router.post(
   paymentController.createIntent.bind(paymentController)
 );
 router.post(
+  "/bank-transfer",
+  authenticate,
+  paymentController.bankTransfer.bind(paymentController)
+);
+router.post(
+  "/paypal/order",
+  authenticate,
+  paymentController.paypalOrder.bind(paymentController)
+);
+router.post(
   "/refund",
   authenticate,
   authorize("SUPER_ADMIN", "ADMIN"),

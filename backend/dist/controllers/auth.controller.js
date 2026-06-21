@@ -29,7 +29,7 @@ class AuthController {
     }
     async customerLogin(req, res) {
         try {
-            const result = await authService.loginCustomer(req.body.email, req.body.password);
+            const result = await authService.loginCustomer(req.body.email, req.body.password, req.body.twoFactorCode);
             res.cookie("refreshToken", result.refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
@@ -75,7 +75,7 @@ class AuthController {
     async login(req, res) {
         try {
             const { email, password } = req.body;
-            const result = await authService.login(email, password);
+            const result = await authService.login(email, password, req.body.twoFactorCode);
             res.cookie("refreshToken", result.refreshToken, {
                 httpOnly: true,
                 secure: false,
@@ -111,6 +111,32 @@ class AuthController {
                 success: false,
                 message: error.message
             });
+        }
+    }
+    async enableTwoFactor(req, res) {
+        try {
+            const data = await authService.enableTwoFactor(req.user.id);
+            return res.json({
+                success: true,
+                message: "Two-factor authentication enabled",
+                data
+            });
+        }
+        catch (error) {
+            return res.status(400).json({ success: false, message: error.message });
+        }
+    }
+    async disableTwoFactor(req, res) {
+        try {
+            const data = await authService.disableTwoFactor(req.user.id);
+            return res.json({
+                success: true,
+                message: "Two-factor authentication disabled",
+                data
+            });
+        }
+        catch (error) {
+            return res.status(400).json({ success: false, message: error.message });
         }
     }
     async logout(req, res) {

@@ -41,6 +41,8 @@ class PaymentService {
         const payment = await Payment_1.Payment.create({
             orderId: order.id,
             stripePaymentIntentId: intent.id,
+            provider: Payment_1.PaymentProvider.STRIPE,
+            providerReference: intent.id,
             amount,
             currency: intent.currency,
             metadata: intent.metadata
@@ -92,6 +94,58 @@ class PaymentService {
             await Order_1.Order.update({ paymentStatus: Order_1.PaymentStatus.PARTIALLY_REFUNDED }, { where: { id: payment.orderId } });
         }
         return refund;
+    }
+    async createBankTransferInstruction(orderId) {
+        const order = await Order_1.Order.findByPk(orderId);
+        if (!order)
+            throw new Error("Order not found");
+        if (order.paymentMethod !== Order_1.PaymentMethod.BANK_TRANSFER) {
+            throw new Error("Order is not configured for bank transfer");
+        }
+        const reference = `BANK-${order.orderNumber}`;
+        const payment = await Payment_1.Payment.create({
+            orderId: order.id,
+            provider: Payment_1.PaymentProvider.BANK_TRANSFER,
+            providerReference: reference,
+            amount: Number(order.totalAmount),
+            currency: process.env.BANK_TRANSFER_CURRENCY || "gbp",
+            status: Payment_1.PaymentRecordStatus.PENDING,
+            metadata: {
+                bankName: process.env.BANK_TRANSFER_BANK_NAME || "",
+                accountName: process.env.BANK_TRANSFER_ACCOUNT_NAME || "",
+                accountNumber: process.env.BANK_TRANSFER_ACCOUNT_NUMBER || "",
+                sortCode: process.env.BANK_TRANSFER_SORT_CODE || "",
+                iban: process.env.BANK_TRANSFER_IBAN || "",
+                reference
+            }
+        });
+        return {
+            payment,
+            instructions: payment.metadata
+        };
+    }
+    async createPayPalOrder(orderId) {
+        const order = await Order_1.Order.findByPk(orderId);
+        if (!order)
+            throw new Error("Order not found");
+        const reference = `PAYPAL-${order.orderNumber}`;
+        const payment = await Payment_1.Payment.create({
+            orderId: order.id,
+            provider: Payment_1.PaymentProvider.PAYPAL,
+            providerReference: reference,
+            amount: Number(order.totalAmount),
+            currency: process.env.PAYPAL_CURRENCY || "gbp",
+            status: Payment_1.PaymentRecordStatus.PENDING,
+            metadata: {
+                paypalClientIdConfigured: String(Boolean(process.env.PAYPAL_CLIENT_ID)),
+                reference
+            }
+        });
+        return {
+            payment,
+            approvalUrl: process.env.PAYPAL_PLACEHOLDER_APPROVAL_URL || null,
+            message: "PayPal order placeholder created"
+        };
     }
     constructWebhookEvent(payload, signature) {
         const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;

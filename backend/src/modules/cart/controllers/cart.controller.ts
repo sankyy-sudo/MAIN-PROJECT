@@ -33,7 +33,8 @@ export class CartController {
       const data = await service.addItem(
         cart.id,
         req.body.productId,
-        Number(req.body.quantity)
+        Number(req.body.quantity),
+        req.user?.id
       );
       res.cookie("cartSessionId", cart.sessionId, {
         httpOnly: false,

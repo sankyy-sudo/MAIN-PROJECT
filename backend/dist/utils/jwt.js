@@ -29,7 +29,8 @@ const generateAccessToken = (user) => {
     return jsonwebtoken_1.default.sign({
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        businessAccountId: user.businessAccountId
     }, getAccessSecret(), accessTokenOptions);
 };
 exports.generateAccessToken = generateAccessToken;
@@ -37,7 +38,8 @@ const generateRefreshToken = (user) => {
     return jsonwebtoken_1.default.sign({
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        businessAccountId: user.businessAccountId
     }, getRefreshSecret(), refreshTokenOptions);
 };
 exports.generateRefreshToken = generateRefreshToken;

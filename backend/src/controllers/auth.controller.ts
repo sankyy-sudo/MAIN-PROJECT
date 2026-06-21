@@ -37,7 +37,8 @@ export class AuthController {
     try {
       const result = await authService.loginCustomer(
         req.body.email,
-        req.body.password
+        req.body.password,
+        req.body.twoFactorCode
       );
       res.cookie("refreshToken", result.refreshToken, {
         httpOnly: true,
@@ -95,7 +96,8 @@ export class AuthController {
 
       const result = await authService.login(
         email,
-        password
+        password,
+        req.body.twoFactorCode
       );
 
       res.cookie("refreshToken", result.refreshToken, {
@@ -136,6 +138,32 @@ export class AuthController {
         success: false,
         message: error.message
       });
+    }
+  }
+
+  async enableTwoFactor(req: Request, res: Response) {
+    try {
+      const data = await authService.enableTwoFactor(req.user!.id);
+      return res.json({
+        success: true,
+        message: "Two-factor authentication enabled",
+        data
+      });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async disableTwoFactor(req: Request, res: Response) {
+    try {
+      const data = await authService.disableTwoFactor(req.user!.id);
+      return res.json({
+        success: true,
+        message: "Two-factor authentication disabled",
+        data
+      });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, message: error.message });
     }
   }
 

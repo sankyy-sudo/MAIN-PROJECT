@@ -6,6 +6,7 @@ import {
 } from "../models/BusinessAccount";
 import { Invoice } from "../../orders/models/Invoice";
 import { Order } from "../../orders/models/Order";
+import { User } from "../../../models/User";
 
 interface BusinessAccountQuery {
   search?: string;
@@ -61,6 +62,54 @@ export class BusinessAccountService {
 
   async getBusinessAccountById(id: string) {
     return BusinessAccount.findByPk(id);
+  }
+
+  async requestBusinessAccess(userId: string, data: Partial<IBusinessAccount>) {
+    const user = await User.findByPk(userId);
+    if (!user) throw new Error("User not found");
+    if (user.businessAccountId) {
+      throw new Error("Your user is already linked to a business account");
+    }
+
+    const existing = await BusinessAccount.findOne({
+      where: {
+        [Op.or]: [
+          { gstNumber: String(data.gstNumber || "").trim().toUpperCase() },
+          { email: String(data.email || user.email).trim().toLowerCase() }
+        ]
+      }
+    });
+
+    const account =
+      existing ||
+      (await this.createBusinessAccount({
+        companyName: data.companyName,
+        gstNumber: data.gstNumber,
+        businessAddress: data.businessAddress,
+        contactPerson: data.contactPerson || user.name,
+        email: data.email || user.email,
+        phone: data.phone,
+        pricingTier: data.pricingTier || PricingTier.SILVER
+      }));
+
+    await user.update({ businessAccountId: account.id });
+    return { account, user };
+  }
+
+  async getMyBusinessAccount(userId: string) {
+    const user = await User.findByPk(userId);
+    if (!user?.businessAccountId) {
+      throw new Error("No business account linked to this user");
+    }
+    return this.getAccountDashboard(user.businessAccountId);
+  }
+
+  async getMyInvoices(userId: string) {
+    const user = await User.findByPk(userId);
+    if (!user?.businessAccountId) {
+      throw new Error("No business account linked to this user");
+    }
+    return this.getInvoices(user.businessAccountId);
   }
 
   async updateBusinessAccount(id: string, data: Partial<IBusinessAccount>) {

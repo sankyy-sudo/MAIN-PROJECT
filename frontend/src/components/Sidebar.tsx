@@ -35,6 +35,15 @@ const Sidebar = () => {
 
         <ListItemButton
           component={Link}
+          to="/analytics"
+        >
+          <ListItemText
+            primary="Analytics"
+          />
+        </ListItemButton>
+
+        <ListItemButton
+          component={Link}
           to="/users"
         >
           <ListItemText
@@ -93,6 +102,42 @@ const Sidebar = () => {
         >
           <ListItemText
             primary="Orders"
+          />
+        </ListItemButton>
+
+        <ListItemButton
+          component={Link}
+          to="/cms"
+        >
+          <ListItemText
+            primary="CMS"
+          />
+        </ListItemButton>
+
+        <ListItemButton
+          component={Link}
+          to="/commerce"
+        >
+          <ListItemText
+            primary="Commerce"
+          />
+        </ListItemButton>
+
+        <ListItemButton
+          component={Link}
+          to="/marketing"
+        >
+          <ListItemText
+            primary="Marketing"
+          />
+        </ListItemButton>
+
+        <ListItemButton
+          component={Link}
+          to="/integrations"
+        >
+          <ListItemText
+            primary="Integrations"
           />
         </ListItemButton>
 

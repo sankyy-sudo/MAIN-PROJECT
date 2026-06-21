@@ -66,6 +66,10 @@ User.init({
     lastLogin: sequelize_1.DataTypes.DATE,
     passwordResetToken: sequelize_1.DataTypes.STRING,
     passwordResetExpires: sequelize_1.DataTypes.DATE,
+    failedLoginAttempts: { type: sequelize_1.DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    lockUntil: sequelize_1.DataTypes.DATE,
+    twoFactorEnabled: { type: sequelize_1.DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    twoFactorSecret: sequelize_1.DataTypes.STRING,
     businessAccountId: sequelize_1.DataTypes.UUID,
     createdAt: sequelize_1.DataTypes.DATE,
     updatedAt: sequelize_1.DataTypes.DATE

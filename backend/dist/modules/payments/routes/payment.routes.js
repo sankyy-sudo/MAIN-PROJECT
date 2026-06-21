@@ -6,5 +6,7 @@ const role_middleware_1 = require("../../../middleware/role.middleware");
 const payment_controller_1 = require("../controllers/payment.controller");
 const router = (0, express_1.Router)();
 router.post("/create-intent", auth_middleware_1.authenticate, payment_controller_1.paymentController.createIntent.bind(payment_controller_1.paymentController));
+router.post("/bank-transfer", auth_middleware_1.authenticate, payment_controller_1.paymentController.bankTransfer.bind(payment_controller_1.paymentController));
+router.post("/paypal/order", auth_middleware_1.authenticate, payment_controller_1.paymentController.paypalOrder.bind(payment_controller_1.paymentController));
 router.post("/refund", auth_middleware_1.authenticate, (0, role_middleware_1.authorize)("SUPER_ADMIN", "ADMIN"), payment_controller_1.paymentController.refund.bind(payment_controller_1.paymentController));
 exports.default = router;

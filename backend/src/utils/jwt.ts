@@ -5,6 +5,7 @@ interface JwtPayload {
   id: string;
   email: string;
   role: string;
+  businessAccountId?: string | null;
 }
 
 const getAccessSecret = (): string => {
@@ -42,7 +43,8 @@ export const generateAccessToken = (
     {
       id: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      businessAccountId: user.businessAccountId
     },
     getAccessSecret(),
     accessTokenOptions
@@ -56,7 +58,8 @@ export const generateRefreshToken = (
     {
       id: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      businessAccountId: user.businessAccountId
     },
     getRefreshSecret(),
     refreshTokenOptions

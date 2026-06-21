@@ -25,6 +25,8 @@ Product.init({
     retailPrice: { type: sequelize_1.DataTypes.DECIMAL(12, 2), allowNull: false, validate: { min: 0 } },
     wholesalePrice: { type: sequelize_1.DataTypes.DECIMAL(12, 2), allowNull: false, validate: { min: 0 } },
     stockQuantity: { type: sequelize_1.DataTypes.INTEGER, allowNull: false, defaultValue: 0, validate: { min: 0 } },
+    allowPreOrder: { type: sequelize_1.DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    preOrderLimit: { type: sequelize_1.DataTypes.INTEGER, allowNull: false, defaultValue: 0, validate: { min: 0 } },
     isActive: { type: sequelize_1.DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     createdAt: sequelize_1.DataTypes.DATE,
     updatedAt: sequelize_1.DataTypes.DATE

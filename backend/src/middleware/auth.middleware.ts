@@ -23,7 +23,8 @@ export const authenticate = (
     req.user = {
       id: decoded.id,
       email: decoded.email,
-      role: decoded.role as any
+      role: decoded.role as any,
+      businessAccountId: decoded.businessAccountId
     };
 
     next();
@@ -50,7 +51,8 @@ export const optionalAuthenticate = (
     req.user = {
       id: decoded.id,
       email: decoded.email,
-      role: decoded.role as any
+      role: decoded.role as any,
+      businessAccountId: decoded.businessAccountId
     };
   } catch {
     // Public endpoints remain accessible when an optional token is invalid.

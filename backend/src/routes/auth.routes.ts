@@ -52,6 +52,18 @@ router.get(
 );
 
 router.post(
+  "/2fa/enable",
+  authenticate,
+  authController.enableTwoFactor.bind(authController)
+);
+
+router.post(
+  "/2fa/disable",
+  authenticate,
+  authController.disableTwoFactor.bind(authController)
+);
+
+router.post(
   "/logout",
   authenticate,
   authController.logout.bind(authController)

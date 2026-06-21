@@ -2,9 +2,53 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.businessAccountController = exports.BusinessAccountController = void 0;
 const business_account_service_1 = require("../services/business-account.service");
+const jwt_1 = require("../../../utils/jwt");
 const service = new business_account_service_1.BusinessAccountService();
 const getParamId = (id) => Array.isArray(id) ? id[0] : id;
 class BusinessAccountController {
+    async requestBusinessAccess(req, res) {
+        try {
+            const result = await service.requestBusinessAccess(req.user.id, req.body);
+            return res.status(201).json({
+                success: true,
+                message: "Professional access enabled",
+                data: {
+                    ...result,
+                    accessToken: (0, jwt_1.generateAccessToken)(result.user)
+                }
+            });
+        }
+        catch (error) {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        }
+    }
+    async myDashboard(req, res) {
+        try {
+            const result = await service.getMyBusinessAccount(req.user.id);
+            return res.json({ success: true, data: result });
+        }
+        catch (error) {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
+        }
+    }
+    async myInvoices(req, res) {
+        try {
+            const invoices = await service.getMyInvoices(req.user.id);
+            return res.json({ success: true, data: invoices });
+        }
+        catch (error) {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
+        }
+    }
     async createBusinessAccount(req, res) {
         const account = await service.createBusinessAccount(req.body);
         return res.status(201).json({

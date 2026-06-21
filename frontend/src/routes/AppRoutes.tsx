@@ -22,12 +22,36 @@ import Customers
 from "../pages/crm/Customers";
 import BusinessAccounts
 from "../pages/b2b/BusinessAccounts";
+import ProfessionalRequest
+from "../pages/b2b/ProfessionalRequest";
+import ProfessionalDashboard
+from "../pages/b2b/ProfessionalDashboard";
+import BulkOrderPage
+from "../pages/b2b/BulkOrderPage";
+import B2BInvoicesPage
+from "../pages/b2b/B2BInvoicesPage";
 import Products
 from "../pages/inventory/Products";
 import Inventory
 from "../pages/inventory/Inventory";
 import Orders
 from "../pages/orders/Orders";
+import CmsAdmin
+from "../pages/cms/CmsAdmin";
+import AcademyPage
+from "../pages/cms/AcademyPage";
+import CommerceAdmin
+from "../pages/commerce/CommerceAdmin";
+import MarketingAdmin
+from "../pages/marketing/MarketingAdmin";
+import IntegrationsAdmin
+from "../pages/integrations/IntegrationsAdmin";
+import LegalPage
+from "../pages/legal/LegalPage";
+import CookieConsent
+from "../components/CookieConsent";
+import AnalyticsDashboard
+from "../pages/analytics/AnalyticsDashboard";
 
 import DashboardLayout
 from "../layouts/DashboardLayout";
@@ -48,8 +72,24 @@ import ProductsPage
 from "../pages/store/ProductsPage";
 import CartPage
 from "../pages/store/CartPage";
+import ProductDetailPage
+from "../pages/store/ProductDetailPage";
+import CheckoutPage
+from "../pages/store/CheckoutPage";
+import OrderSuccessPage
+from "../pages/store/OrderSuccessPage";
+import CustomerAccount
+from "../pages/account/CustomerAccount";
+import CustomerOrders
+from "../pages/account/CustomerOrders";
+import CustomerProfile
+from "../pages/account/CustomerProfile";
 
 const AppRoutes = () => {
+  const adminPrefix =
+    import.meta.env.VITE_ADMIN_ROUTE_PREFIX ||
+    "admin-console";
+
   return (
     <BrowserRouter>
 
@@ -67,6 +107,11 @@ const AppRoutes = () => {
         <Route
           path="/login"
           element={<Login />}
+        />
+
+        <Route
+          path={`/${adminPrefix}`}
+          element={<Navigate to="/dashboard" replace />}
         />
 
         <Route
@@ -94,6 +139,10 @@ const AppRoutes = () => {
             element={<ProductsPage />}
           />
           <Route
+            path="/store/products/:id"
+            element={<ProductDetailPage />}
+          />
+          <Route
             path="/cart"
             element={<CartPage />}
           />
@@ -105,16 +154,73 @@ const AppRoutes = () => {
             path="/store/contact"
             element={<ProductsPage />}
           />
+          <Route
+            path="/privacy"
+            element={<LegalPage />}
+          />
+          <Route
+            path="/terms"
+            element={<LegalPage />}
+          />
+          <Route
+            path="/legal/:slug"
+            element={<LegalPage />}
+          />
+          <Route
+            path="/academy"
+            element={<AcademyPage />}
+          />
         </Route>
 
         <Route
-          path="/checkout"
           element={
             <CustomerProtectedRoute>
               <StoreLayout />
             </CustomerProtectedRoute>
           }
-        />
+        >
+          <Route
+            path="/checkout"
+            element={<CheckoutPage />}
+          />
+          <Route
+            path="/checkout/success"
+            element={<OrderSuccessPage />}
+          />
+          <Route
+            path="/account"
+            element={<CustomerAccount />}
+          >
+            <Route
+              index
+              element={<Navigate to="/account/orders" replace />}
+            />
+            <Route
+              path="/account/orders"
+              element={<CustomerOrders />}
+            />
+            <Route
+              path="/account/profile"
+              element={<CustomerProfile />}
+            />
+          </Route>
+          <Route
+            path="/professional/request"
+            element={<ProfessionalRequest />}
+          />
+          <Route
+            path="/professional/dashboard"
+            element={<ProfessionalDashboard />}
+          />
+          <Route
+            path="/professional/bulk-order"
+            element={<BulkOrderPage />}
+          />
+          <Route
+            path="/professional/invoices"
+            element={<B2BInvoicesPage />}
+          />
+        </Route>
 
         <Route
           element={
@@ -128,6 +234,13 @@ const AppRoutes = () => {
             path="/dashboard"
             element={
               <Dashboard />
+            }
+          />
+
+          <Route
+            path="/analytics"
+            element={
+              <AnalyticsDashboard />
             }
           />
 
@@ -194,9 +307,38 @@ const AppRoutes = () => {
             }
           />
 
+          <Route
+            path="/cms"
+            element={
+              <CmsAdmin />
+            }
+          />
+
+          <Route
+            path="/commerce"
+            element={
+              <CommerceAdmin />
+            }
+          />
+
+          <Route
+            path="/marketing"
+            element={
+              <MarketingAdmin />
+            }
+          />
+
+          <Route
+            path="/integrations"
+            element={
+              <IntegrationsAdmin />
+            }
+          />
+
         </Route>
 
       </Routes>
+      <CookieConsent />
 
     </BrowserRouter>
   );
