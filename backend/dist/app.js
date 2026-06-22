@@ -30,6 +30,7 @@ const commerce_routes_1 = __importDefault(require("./modules/commerce/routes/com
 const marketing_routes_1 = __importDefault(require("./modules/marketing/routes/marketing.routes"));
 const integration_routes_1 = __importDefault(require("./modules/integrations/routes/integration.routes"));
 const security_routes_1 = __importDefault(require("./modules/security/routes/security.routes"));
+const analytics_routes_1 = __importDefault(require("./modules/analytics/routes/analytics.routes"));
 const rateLimit_middleware_1 = require("./middleware/rateLimit.middleware");
 const security_middleware_1 = require("./middleware/security.middleware");
 const app = (0, express_1.default)();
@@ -92,6 +93,7 @@ app.use("/api/commerce", commerce_routes_1.default);
 app.use("/api/marketing", marketing_routes_1.default);
 app.use("/api/integrations", integration_routes_1.default);
 app.use("/api/security", security_routes_1.default);
+app.use("/api/analytics", analytics_routes_1.default);
 app.get("/", (_req, res) => {
     res.status(200).json({
         success: true,

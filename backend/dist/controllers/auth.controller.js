@@ -5,6 +5,28 @@ const auth_services_1 = require("../services/auth.services");
 const authService = new auth_services_1.AuthService();
 const getParamValue = (value) => Array.isArray(value) ? value[0] : value;
 class AuthController {
+    async demoAdminLogin(_req, res) {
+        try {
+            const result = await authService.demoAdminLogin();
+            res.cookie("refreshToken", result.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+            return res.json({
+                success: true,
+                message: "Demo admin login successful",
+                data: {
+                    user: result.user,
+                    accessToken: result.accessToken
+                }
+            });
+        }
+        catch (error) {
+            return res.status(403).json({ success: false, message: error.message });
+        }
+    }
     async customerRegister(req, res) {
         try {
             const result = await authService.registerCustomer(req.body.name, req.body.email, req.body.password);

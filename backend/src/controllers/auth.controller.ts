@@ -7,6 +7,28 @@ const getParamValue = (value: string | string[]) =>
   Array.isArray(value) ? value[0] : value;
 
 export class AuthController {
+  async demoAdminLogin(_req: Request, res: Response) {
+    try {
+      const result = await authService.demoAdminLogin();
+      res.cookie("refreshToken", result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+      return res.json({
+        success: true,
+        message: "Demo admin login successful",
+        data: {
+          user: result.user,
+          accessToken: result.accessToken
+        }
+      });
+    } catch (error: any) {
+      return res.status(403).json({ success: false, message: error.message });
+    }
+  }
+
   async customerRegister(req: Request, res: Response) {
     try {
       const result = await authService.registerCustomer(

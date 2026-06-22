@@ -40,29 +40,70 @@ const StoreHeader = () => {
 
   return (
     <>
-      <AppBar position="sticky" color="primary">
-        <Toolbar>
+      <AppBar
+        position="sticky"
+        color="transparent"
+        sx={{
+          backdropFilter: "blur(18px)",
+          background:
+            "linear-gradient(135deg, rgba(15,63,79,0.94), rgba(21,94,117,0.88))",
+          borderBottom: "1px solid rgba(255,255,255,0.14)"
+        }}
+      >
+        <Toolbar sx={{ minHeight: 72 }}>
           <Typography
             component={Link}
             to="/store"
             variant="h6"
-            sx={{ color: "inherit", textDecoration: "none", fontWeight: 700 }}
+            sx={{
+              color: "common.white",
+              textDecoration: "none",
+              fontWeight: 900,
+              mr: 2
+            }}
           >
             COTECAE
           </Typography>
 
-          <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2, mx: "auto" }}>
-            <Button color="inherit" component={Link} to="/store/products">Shop</Button>
-            <Button color="inherit" component={Link} to="/professional/dashboard">Professional</Button>
-            <Button color="inherit" component={Link} to="/academy">Academy</Button>
-            <Button color="inherit" component={Link} to="/store/about">About</Button>
-            <Button color="inherit" component={Link} to="/store/contact">Contact</Button>
+          <Box sx={{ display: { xs: "none", md: "flex" }, gap: 0.5, mx: "auto" }}>
+            {[
+              ["Shop", "/store/products"],
+              ["Professional", "/professional/dashboard"],
+              ["Academy", "/academy"],
+              ["About", "/store/about"],
+              ["Contact", "/store/contact"]
+            ].map(([label, to]) => (
+              <Button
+                key={to}
+                color="inherit"
+                component={Link}
+                to={to}
+                sx={{
+                  color: "rgba(255,255,255,0.82)",
+                  px: 1.5,
+                  "&:hover": {
+                    color: "common.white",
+                    backgroundColor: "rgba(255,255,255,0.12)"
+                  }
+                }}
+              >
+                {label}
+              </Button>
+            ))}
           </Box>
 
-          <IconButton color="inherit" onClick={(event) => setSearchAnchor(event.currentTarget)}>
+          <IconButton
+            color="inherit"
+            onClick={(event) => setSearchAnchor(event.currentTarget)}
+            sx={{ color: "common.white" }}
+          >
             <SearchIcon />
           </IconButton>
-          <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
+          <IconButton
+            color="inherit"
+            onClick={() => setDrawerOpen(true)}
+            sx={{ color: "common.white" }}
+          >
             <Badge badgeContent={cartCount} color="secondary">
               <ShoppingCartIcon />
             </Badge>
@@ -70,7 +111,11 @@ const StoreHeader = () => {
 
           {user || token ? (
             <>
-              <IconButton color="inherit" onClick={(event) => setAccountAnchor(event.currentTarget)}>
+              <IconButton
+                color="inherit"
+                onClick={(event) => setAccountAnchor(event.currentTarget)}
+                sx={{ color: "common.white" }}
+              >
                 <AccountCircleIcon />
               </IconButton>
               <Menu
@@ -93,8 +138,10 @@ const StoreHeader = () => {
             </>
           ) : (
             <Box sx={{ display: { xs: "none", sm: "flex" }, gap: 1 }}>
-              <Button color="inherit" component={Link} to="/login">Login</Button>
-              <Button color="inherit" component={Link} to="/register">Register</Button>
+              <Button sx={{ color: "common.white" }} component={Link} to="/login">Login</Button>
+              <Button variant="contained" color="secondary" component={Link} to="/register">
+                Register
+              </Button>
             </Box>
           )}
         </Toolbar>
@@ -106,7 +153,7 @@ const StoreHeader = () => {
         onClose={() => setSearchAnchor(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <Box sx={{ p: 2, display: "flex", gap: 1 }}>
+        <Box sx={{ p: 2, display: "flex", gap: 1, minWidth: 360 }}>
           <TextField
             size="small"
             label="Search products"

@@ -10,6 +10,43 @@ import {
 import { emailTemplates, sendTemplateEmail } from "../utils/email";
 
 export class AuthService {
+  async demoAdminLogin() {
+    if (
+      process.env.DEMO_ADMIN_LOGIN_ENABLED !== "true" &&
+      process.env.NODE_ENV === "production"
+    ) {
+      throw new Error("Demo admin login is disabled");
+    }
+
+    const email = process.env.DEMO_ADMIN_EMAIL || "demo.admin@cotecae.com";
+    const password = process.env.DEMO_ADMIN_PASSWORD || "demoAdmin123";
+    const [user, created] = await User.findOrCreate({
+      where: { email: email.toLowerCase() },
+      defaults: {
+        name: "Demo Super Admin",
+        email,
+        password: await bcrypt.hash(password, 10),
+        role: UserRole.SUPER_ADMIN
+      }
+    });
+
+    if (!created) {
+      await user.update({
+        role: UserRole.SUPER_ADMIN,
+        failedLoginAttempts: 0,
+        lockUntil: null,
+        twoFactorEnabled: false,
+        twoFactorSecret: null
+      });
+    }
+
+    return {
+      user,
+      accessToken: generateAccessToken(user),
+      refreshToken: generateRefreshToken(user)
+    };
+  }
+
   async registerCustomer(name: string, email: string, password: string) {
     const existing = await User.findOne({
       where: { email: email.toLowerCase() }

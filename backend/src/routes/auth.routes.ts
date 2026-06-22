@@ -22,6 +22,11 @@ from "../middleware/auth.middleware";
 const router = Router();
 
 router.post(
+  "/demo-admin",
+  authController.demoAdminLogin.bind(authController)
+);
+
+router.post(
   "/register",
   validate(registerSchema),
   authController.register.bind(authController)

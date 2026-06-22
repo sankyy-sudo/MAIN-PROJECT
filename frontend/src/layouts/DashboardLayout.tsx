@@ -14,7 +14,9 @@ const DashboardLayout = () => {
     <Box
       sx={{
         display: "flex",
-        minHeight: "100vh"
+        minHeight: "100vh",
+        background:
+          "linear-gradient(135deg, #f7fbfa 0%, #eef8f6 48%, #fff7ed 100%)"
       }}
     >
       <Sidebar />
@@ -23,8 +25,9 @@ const DashboardLayout = () => {
         component="main"
         sx={{
           flex: 1,
-          p: 3,
-          ml: "240px"
+          p: { xs: 2, md: 4 },
+          ml: "240px",
+          minWidth: 0
         }}
       >
         <Outlet />

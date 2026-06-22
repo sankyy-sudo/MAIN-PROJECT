@@ -20,8 +20,8 @@ export class AnalyticsService {
         [fn("COUNT", col("id")), "orders"],
         [fn("COALESCE", fn("SUM", col("totalAmount")), 0), "revenue"]
       ],
-      group: [literal("period")],
-      order: [[literal("period"), "ASC"]],
+      group: [fn("date_trunc", "month", col("createdAt"))],
+      order: [[fn("date_trunc", "month", col("createdAt")), "ASC"]],
       raw: true
     }) as any[];
 
@@ -91,8 +91,8 @@ export class AnalyticsService {
         [fn("date_trunc", "month", col("createdAt")), "period"],
         [fn("COUNT", col("id")), "customers"]
       ],
-      group: [literal("period")],
-      order: [[literal("period"), "ASC"]],
+      group: [fn("date_trunc", "month", col("createdAt"))],
+      order: [[fn("date_trunc", "month", col("createdAt")), "ASC"]],
       raw: true
     }) as any[];
 
@@ -151,7 +151,7 @@ export class AnalyticsService {
         [fn("COALESCE", col("source"), "Unknown"), "source"],
         [fn("COUNT", col("id")), "count"]
       ],
-      group: [literal("source")],
+      group: [fn("COALESCE", col("source"), "Unknown")],
       raw: true
     }) as any[];
 

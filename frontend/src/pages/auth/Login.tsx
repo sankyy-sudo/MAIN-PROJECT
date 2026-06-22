@@ -66,6 +66,26 @@ const Login = () => {
     }
   };
 
+  const demoAdminLogin = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const response = await api.post("/auth/demo-admin");
+      const user = response.data.data.user;
+      const token = response.data.data.accessToken;
+      dispatch(loginSuccess({ user, token }));
+      await dispatch(mergeCart());
+      await dispatch(fetchCart());
+      navigate("/dashboard");
+    } catch (requestError: any) {
+      setError(
+        requestError.response?.data?.message || "Demo admin login failed"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Container maxWidth="xs">
       <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
@@ -108,6 +128,14 @@ const Login = () => {
             />
             <Button type="submit" variant="contained" disabled={loading}>
               {loading ? <CircularProgress size={22} /> : "Login"}
+            </Button>
+            <Button
+              type="button"
+              variant="outlined"
+              disabled={loading}
+              onClick={demoAdminLogin}
+            >
+              Login as Demo Admin
             </Button>
             <Stack direction="row" sx={{ justifyContent: "space-between" }}>
               <MuiLink component={Link} to="/forgot-password">
